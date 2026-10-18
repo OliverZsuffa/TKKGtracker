@@ -4,7 +4,7 @@ import unittest
 
 from bs4 import BeautifulSoup
 
-from scraper.sources.archive import discover_archive_episodes, parse_archive_episode
+from scraper.sources.archive import discover_archive_episodes, parse_archive_episode, _resolve_index_link
 from scraper.sources.official import parse_official_page
 from scraper.sources.tumblr import parse_tumblr_episode
 
@@ -30,7 +30,24 @@ class SourceParserTests(unittest.TestCase):
         self.assertEqual(len(records), 1)
         self.assertEqual(records[0]["number"], 1)
         self.assertEqual(records[0]["title"], "Die Jagd nach den Millionendieben")
-        self.assertIn("folge-001/inhalt.html", records[0]["source_url"])
+        self.assertEqual(records[0]["source_url"], "https://www.tkkg-site.de/de/hoeren/hoerspiele/serie/folge-001/inhalt.html")
+
+    def test_archive_resolves_real_world_href_forms_without_duplicate_path(self):
+        expected = "https://www.tkkg-site.de/de/hoeren/hoerspiele/serie/folge-001/inhalt.html"
+        hrefs = [
+            "/de/hoeren/hoerspiele/serie/folge-001/inhalt.html",
+            "de/hoeren/hoerspiele/serie/folge-001/inhalt.html",
+            "serie/folge-001/inhalt.html",
+            expected,
+            "https://www.tkkg-site.de/de/hoeren/hoerspiele/de/hoeren/hoerspiele/serie/folge-001/inhalt.html",
+        ]
+        for href in hrefs:
+            with self.subTest(href=href):
+                self.assertEqual(_resolve_index_link(href), expected)
+
+    def test_archive_keeps_audio_subdomain_links_unchanged(self):
+        href = "https://audio.tkkg-site.de/post/175481640949/folge207"
+        self.assertEqual(_resolve_index_link(href), href)
 
     def test_archive_detail_extracts_synopsis_tracks_and_release(self):
         url = "https://www.tkkg-site.de/de/hoeren/hoerspiele/serie/folge-001/inhalt.html"
@@ -77,6 +94,43 @@ class SourceParserTests(unittest.TestCase):
         self.assertEqual(len(records[0]["cast"]), 2)
         self.assertEqual(len(records[0]["credits"]), 2)
         self.assertTrue(records[0]["cover_url"].endswith("/cover.jpg"))
+
+    def test_official_page_rejects_number_heading_outside_product_card(self):
+        url = "https://www.tkkg.de/produkte/hoerspiele"
+        client = FakeClient({
+            url: '''
+              <article>
+                <img src="/cover.jpg" alt="TKKG Hörspiel-Folge 243: Die Fährte des Hehlers">
+                <h3>Die Fährte des Hehlers</h3>
+                <h4>TKKG Hörspiel-Folge 243</h4>
+                <h5>Inhalt</h5><p>Ein Fall mit einem Hehler.</p>
+              </article>
+              <h4>TKKG Hörspiel-Folge 500</h4>
+            '''
+        })
+        diagnostics = []
+        records = parse_official_page(client, 0, diagnostics)
+        self.assertEqual([record["number"] for record in records], [243])
+        self.assertEqual(len(diagnostics), 1)
+        self.assertEqual(diagnostics[0]["number"], 500)
+        self.assertIn("not inside a product card", diagnostics[0]["reason"])
+
+    def test_official_page_rejects_mismatched_cover_number(self):
+        url = "https://www.tkkg.de/produkte/hoerspiele"
+        client = FakeClient({
+            url: '''
+              <article>
+                <img src="/cover.jpg" alt="TKKG Hörspiel-Folge 243: Die Fährte des Hehlers">
+                <h3>Die Fährte des Hehlers</h3>
+                <h4>TKKG Hörspiel-Folge 500</h4>
+              </article>
+            '''
+        })
+        diagnostics = []
+        records = parse_official_page(client, 0, diagnostics)
+        self.assertEqual(records, [])
+        self.assertEqual(diagnostics[0]["number"], 500)
+        self.assertIn("conflicts with cover image number 243", diagnostics[0]["reason"])
 
     def test_tumblr_post_extracts_release_and_tracks(self):
         url = "https://audio.tkkg-site.de/post/test/folge207"
