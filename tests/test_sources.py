@@ -126,6 +126,17 @@ class SourceParserTests(unittest.TestCase):
         self.assertEqual(diagnostics[0]["number"], 500)
         self.assertIn("not inside a uniquely identified collapsed detail panel", diagnostics[0]["reason"])
 
+    def test_official_page_excludes_movie_tie_in_numbered_500(self):
+        url = "https://www.tkkg.de/produkte/hoerspiele"
+        title = "Jede Legende hat Ihren Anfang (Hörspiel zum Kinofilm)"
+        client = FakeClient({url: official_product(500, title, "Hörspiel zum Kinofilm.")})
+        diagnostics = []
+        records = parse_official_page(client, 0, diagnostics)
+        self.assertEqual(records, [])
+        self.assertEqual(diagnostics[0]["number"], 500)
+        self.assertEqual(diagnostics[0]["title"], title)
+        self.assertIn("excluded special product", diagnostics[0]["reason"])
+
     def test_official_page_rejects_mismatched_cover_number(self):
         url = "https://www.tkkg.de/produkte/hoerspiele"
         client = FakeClient({url: official_product(500, "Unrelated product", "Not the episode.", image_number=243)})
