@@ -146,6 +146,23 @@ class SourceParserTests(unittest.TestCase):
         self.assertEqual(diagnostics[0]["title"], title)
         self.assertIn("excluded special product", diagnostics[0]["reason"])
 
+    def test_official_page_excludes_special_releases_mislabeled_with_series_numbers(self):
+        url = "https://www.tkkg.de/produkte/hoerspiele"
+        special_products = [
+            (208, "Adventskalender: Ein fast perfektes Weihnachtsmenü"),
+            (209, "Das Geheimnis um TKKG (Neuaufnahme)"),
+            (221, "Schreckliche Weihnacht überall (Adventskalender)"),
+            (239, "Die Weihnachtsgeiseln"),
+        ]
+        for number, title in special_products:
+            with self.subTest(number=number, title=title):
+                client = FakeClient({url: official_product(number, title, "Special release.")})
+                diagnostics = []
+                records = parse_official_page(client, 0, diagnostics)
+                self.assertEqual(records, [])
+                self.assertEqual(diagnostics[0]["number"], number)
+                self.assertIn("excluded special product", diagnostics[0]["reason"])
+
     def test_official_page_rejects_number_heading_outside_product_detail_panel(self):
         url = "https://www.tkkg.de/produkte/hoerspiele"
         client = FakeClient({url: official_product(243, "Die Fährte des Hehlers", "Ein Fall.") + "<h4>TKKG Hörspiel-Folge 500</h4>"})
@@ -195,6 +212,18 @@ class SourceParserTests(unittest.TestCase):
         self.assertEqual(by_number[222]["sources"][0]["url"], SUPPLEMENTAL_DETAIL_URLS[222])
         self.assertEqual(by_number[223]["sources"][0]["url"], SUPPLEMENTAL_DETAIL_URLS[223])
         self.assertEqual(by_number[234]["sources"][0]["url"], SUPPLEMENTAL_DETAIL_URLS[234])
+
+    def test_tumblr_fallback_strips_archive_catalogue_prefix(self):
+        url = "https://audio.tkkg-site.de/post/test/folge207"
+        client = FakeClient({
+            url: '''
+              <h2>TKKG zum Hören — Doppelte Entführung</h2>
+              <p>Ein Internetstar wurde entführt.</p>
+            '''
+        })
+        discovered = {"number": 207, "title": "TKKG zum Hören — Doppelte Entführung", "source_url": url, "source_name": "TKKG-Site archive"}
+        record = parse_tumblr_episode(client, discovered)
+        self.assertEqual(record["title"], "Doppelte Entführung")
 
     def test_tumblr_post_extracts_release_and_tracks(self):
         url = "https://audio.tkkg-site.de/post/test/folge207"
