@@ -1,6 +1,6 @@
 # Implementation plan: UI redesign, advanced search, and missing-data reports
 
-**Status:** Draft — awaiting Oliver's explicit approval. No application code is changed by this plan.
+**Status:** Approved by Oliver; implementation in progress on PR #6. See notes.md for verified outcomes and remaining checks.
 
 ## 1. Repository findings
 
