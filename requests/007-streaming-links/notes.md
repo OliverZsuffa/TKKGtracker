@@ -1,6 +1,6 @@
 # Implementation notes: Episode streaming links
 
-**Status:** Planning only; awaiting explicit approval.
+**Status:** Implementation in progress on the approved request branch; automated CI not yet verified.
 
 ## Initial research
 
@@ -11,9 +11,16 @@
 
 The playlist and universal links establish useful starting points, but they do not prove direct per-episode availability on every service. Exact per-episode link formats and service coverage have not yet been audited.
 
+## Implementation outcomes
+
+- Added optional listening_links catalogue metadata, JSON Schema validation, merge support, and CSV export.
+- The official source adapter extracts only an episode-specific “Jetzt anhören” link hosted on tkkg.lnk.to; it does not fabricate aliases.
+- Added a “Listen on” section to episode details. Official hub links are shown separately from six platform search shortcuts; search availability is explicitly caveated.
+- Added frontend tests for official-link filtering and platform searches, plus scraper/schema/merge regression tests.
+
 ## Automated checks
 
-None run; no implementation has been performed.
+Not yet run in a local environment. Awaiting GitHub Actions results.
 
 ## Questions for the research phase
 
