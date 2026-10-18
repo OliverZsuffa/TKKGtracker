@@ -1,7 +1,7 @@
 # Request: Complete TKKG catalogue and listening tracker
 
 ## Status
-Approved
+Implementing
 
 ## Desired outcome
 Build a static web application that lists all regular episodes in the main TKKG audio drama series and lets Oliver mark episodes as listened to. A Python scraper will collect catalogue data and GitHub Actions will periodically refresh the validated dataset.
@@ -12,6 +12,7 @@ The repository is newly created. The previously discussed product plan calls for
 Primary candidate sources:
 - Official catalogue: https://www.tkkg.de/produkte/hoerspiele
 - TKKG Site archive: https://www.tkkg-site.de/de/hoeren/hoerspiele/serie.html
+- Newer episode posts linked from the archive: https://audio.tkkg-site.de/
 
 Source coverage, terms, page structure, and exact metadata availability must be verified during source reconnaissance.
 
@@ -83,6 +84,7 @@ See [testing.md](testing.md).
 ## Reference material
 - https://www.tkkg.de/produkte/hoerspiele
 - https://www.tkkg-site.de/de/hoeren/hoerspiele/serie.html
+- https://audio.tkkg-site.de/
 
 ## Open questions
-No blocking product questions have been identified yet. Source reconnaissance may reveal technical or permission constraints that require a proposed plan change and renewed approval.
+No blocking product questions have been identified yet. The initial live scrape must confirm that source access is allowed and that the discovered numbering range is complete before publication.
