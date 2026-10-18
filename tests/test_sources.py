@@ -5,7 +5,12 @@ import unittest
 from bs4 import BeautifulSoup
 
 from scraper.sources.archive import discover_archive_episodes, parse_archive_episode, _resolve_index_link
-from scraper.sources.official import parse_official_page
+from scraper.sources.official import (
+    SUPPLEMENTAL_DETAIL_URLS,
+    discover_official_episodes,
+    parse_official_detail_page,
+    parse_official_page,
+)
 from scraper.sources.tumblr import parse_tumblr_episode
 
 
@@ -41,6 +46,20 @@ def official_product(number: int, title: str, synopsis: str, image_number: int |
             </div>
           </div>
         </div>
+      </div>
+    '''
+
+
+def official_detail(number: int, title: str, synopsis: str, date: str) -> str:
+    return f'''
+      <h1>{title}</h1>
+      <h2>TKKG Hörspiel-Folge {number}</h2>
+      <img src="/cover-{number}.jpg" alt="TKKG Hörspiel-Folge {number}: {title}">
+      <p>Veröffentlichkeitsdatum: {date}</p>
+      <div class="col-md-6">
+        <h3>Inhalt</h3><p>{synopsis}</p>
+        <h3>Sprecher</h3><p>Tim - Sascha Draeger<br>Karl - Tobias Diakow</p>
+        <h3>Details</h3><p>Produktion und Regie: Heikedine Körting<br>Redaktion: Petra Delmar</p>
       </div>
     '''
 
@@ -116,16 +135,6 @@ class SourceParserTests(unittest.TestCase):
         ])
         self.assertTrue(records[0]["cover_url"].endswith("/cover-243.jpg"))
 
-    def test_official_page_rejects_number_heading_outside_product_detail_panel(self):
-        url = "https://www.tkkg.de/produkte/hoerspiele"
-        client = FakeClient({url: official_product(243, "Die Fährte des Hehlers", "Ein Fall.") + "<h4>TKKG Hörspiel-Folge 500</h4>"})
-        diagnostics = []
-        records = parse_official_page(client, 0, diagnostics)
-        self.assertEqual([record["number"] for record in records], [243])
-        self.assertEqual(len(diagnostics), 1)
-        self.assertEqual(diagnostics[0]["number"], 500)
-        self.assertIn("not inside a uniquely identified collapsed detail panel", diagnostics[0]["reason"])
-
     def test_official_page_excludes_movie_tie_in_numbered_500(self):
         url = "https://www.tkkg.de/produkte/hoerspiele"
         title = "Jede Legende hat Ihren Anfang (Hörspiel zum Kinofilm)"
@@ -137,6 +146,16 @@ class SourceParserTests(unittest.TestCase):
         self.assertEqual(diagnostics[0]["title"], title)
         self.assertIn("excluded special product", diagnostics[0]["reason"])
 
+    def test_official_page_rejects_number_heading_outside_product_detail_panel(self):
+        url = "https://www.tkkg.de/produkte/hoerspiele"
+        client = FakeClient({url: official_product(243, "Die Fährte des Hehlers", "Ein Fall.") + "<h4>TKKG Hörspiel-Folge 500</h4>"})
+        diagnostics = []
+        records = parse_official_page(client, 0, diagnostics)
+        self.assertEqual([record["number"] for record in records], [243])
+        self.assertEqual(len(diagnostics), 1)
+        self.assertEqual(diagnostics[0]["number"], 500)
+        self.assertIn("not inside a uniquely identified collapsed detail panel", diagnostics[0]["reason"])
+
     def test_official_page_rejects_mismatched_cover_number(self):
         url = "https://www.tkkg.de/produkte/hoerspiele"
         client = FakeClient({url: official_product(500, "Unrelated product", "Not the episode.", image_number=243)})
@@ -145,6 +164,37 @@ class SourceParserTests(unittest.TestCase):
         self.assertEqual(records, [])
         self.assertEqual(diagnostics[0]["number"], 500)
         self.assertIn("conflicts with cover image number 243", diagnostics[0]["reason"])
+
+    def test_official_detail_page_extracts_missing_episode_metadata(self):
+        number = 222
+        url = SUPPLEMENTAL_DETAIL_URLS[number]
+        client = FakeClient({url: official_detail(number, "Roter Drache 222", "Ein spannender Fall.", "15.04.2022")})
+        record = parse_official_detail_page(client, number, url)
+        self.assertEqual(record["number"], 222)
+        self.assertEqual(record["title"], "Roter Drache 222")
+        self.assertEqual(record["synopsis"], "Ein spannender Fall.")
+        self.assertEqual(record["release_date"], "2022-04-15")
+        self.assertEqual(record["release_year"], 2022)
+        self.assertEqual(record["cast"][0], {"name": "Sascha Draeger", "character": "Tim"})
+        self.assertTrue(record["cover_url"].endswith("/cover-222.jpg"))
+        self.assertEqual(record["sources"][0]["url"], url)
+
+    def test_official_discovery_uses_verified_detail_fallbacks_for_listing_gaps(self):
+        base = "https://www.tkkg.de/produkte/hoerspiele"
+        pages = {
+            base: official_product(243, "Die Fährte des Hehlers", "Ein Fall."),
+            f"{base}?page=1": official_product(243, "Die Fährte des Hehlers", "Ein Fall."),
+            f"{base}?page=2": "<p>No episode headings</p>",
+            f"{base}?page=3": "<p>No episode headings</p>",
+        }
+        for number, url in SUPPLEMENTAL_DETAIL_URLS.items():
+            pages[url] = official_detail(number, {222: "Roter Drache 222", 223: "Betrüger Super Sauber", 234: "Im Auftrag des Bösen"}[number], "Ein Fall.", "15.04.2022")
+        records = discover_official_episodes(FakeClient(pages), max_pages=10)
+        by_number = {record["number"]: record for record in records}
+        self.assertTrue({222, 223, 234}.issubset(by_number))
+        self.assertEqual(by_number[222]["sources"][0]["url"], SUPPLEMENTAL_DETAIL_URLS[222])
+        self.assertEqual(by_number[223]["sources"][0]["url"], SUPPLEMENTAL_DETAIL_URLS[223])
+        self.assertEqual(by_number[234]["sources"][0]["url"], SUPPLEMENTAL_DETAIL_URLS[234])
 
     def test_tumblr_post_extracts_release_and_tracks(self):
         url = "https://audio.tkkg-site.de/post/test/folge207"
