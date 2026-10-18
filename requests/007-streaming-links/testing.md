@@ -1,18 +1,18 @@
 # Testing: Episode streaming links
 
-**Status:** Planned; no implementation tests have been run.
+**Status:** Test plan updated for the implementation; actual automated and manual results pending.
 
 ## Automated tests to add
 
-- [ ] Official episode parsing extracts listening destinations, not unrelated navigation/product links.
-- [ ] Universal-link parsing recognises supported services and preserves provenance.
+- [ ] Official episode parsing extracts only an episode-specific “Jetzt anhören” destination from the matching product card, not unrelated navigation/product links.
+- [ ] Official episode hub destinations preserve the source listing URL and are distinguished from series-wide hubs.
 - [ ] Exact episode/release, series, search, and official-hub links remain distinct.
 - [ ] Valid HTTPS URLs pass; javascript:, data:, malformed URLs, unsupported protocols, missing provenance, and invalid link types fail validation.
 - [ ] Duplicate service/destination entries are handled deterministically.
 - [ ] Missing or empty listening_links remains valid.
 - [ ] A failed listening-link fetch does not erase or invalidate unrelated episode metadata.
 - [ ] Coverage report accurately counts direct, fallback, missing, duplicate, and malformed links.
-- [ ] UI renders zero, one, many, and mixed direct/fallback links correctly.
+- [ ] UI renders episodes with and without an official hub and offers clearly labelled service-search fallbacks.
 - [ ] External links have descriptive accessible names and safe new-tab attributes.
 - [ ] Existing scraper, schema, search, ratings, notes, storage, progress import/export, and gap-report tests still pass.
 
@@ -29,4 +29,5 @@
 
 ## Actual results
 
-_To be filled after implementation; do not pre-mark checks as passed._
+- Automated GitHub Actions checks: pending.
+- Manual browser, mobile, and keyboard checks: not yet performed.
