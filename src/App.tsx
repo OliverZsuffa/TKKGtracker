@@ -6,6 +6,7 @@ import { exportProgress, importProgress, loadProgress, saveProgress } from "./st
 import { activeSearchLabels, filterEpisodes, getSearchOptions, initialSearchState, missingFieldLabels } from "./search";
 import type { MissingField, SearchState, SortMode } from "./search";
 import { createGapReport, downloadText, formatGapReportMarkdown } from "./gapReport";
+import { getListeningOptions } from "./listeningLinks";
 
 const episodes = episodesData as Episode[];
 type Filter = "all" | "unlistened" | "listened";
@@ -176,6 +177,18 @@ export default function App() {
           <div className="modal-topline">CASE FILE / {String(selectedEpisode.number).padStart(3, "0")}</div>
           <div className="detail-heading">{selectedEpisode.cover_url && <img className="modal-cover" src={selectedEpisode.cover_url} alt={"Cover: " + selectedEpisode.title} onError={(event) => { event.currentTarget.style.display = "none"; }} />}<h2 id="episode-modal-title">{selectedEpisode.title}</h2><p className="detail-meta">{selectedEpisode.release_year ?? "Release year unknown"}{selectedEpisode.release_date ? " · " + selectedEpisode.release_date : ""}</p></div>
           <section className="detail-section"><h3>Synopsis</h3><p>{selectedEpisode.synopsis || <span className="missing-value">No synopsis in the current catalogue.</span>}</p></section>
+          {(() => {
+            const listening = getListeningOptions(selectedEpisode);
+            return <section className="detail-section listening-section" aria-labelledby="listening-title">
+              <div className="listening-heading"><div><h3 id="listening-title">Listen on</h3><p>Open the official episode page or search a service. Search links do not confirm availability.</p></div><span className="listening-icon" aria-hidden="true">♫</span></div>
+              {listening.official.length > 0 && <div className="listening-official-list">{listening.official.map((option) => <a className="listening-official-link" key={option.id} href={option.url} target="_blank" rel="noopener noreferrer" aria-label={option.description + ": " + selectedEpisode.title}><span className="listening-link-symbol" aria-hidden="true">↗</span><span><strong>{option.label}</strong><small>Official episode-specific page · streaming services</small></span><span className="listening-arrow" aria-hidden="true">↗</span></a>)}</div>}
+              <details className="listening-searches">
+                <summary>Search this episode on other services <span>Spotify, Apple Music, Amazon Music and more</span></summary>
+                <div className="listening-service-grid">{listening.searches.map((option) => <a className="listening-service-link" key={option.id} href={option.url} target="_blank" rel="noopener noreferrer" aria-label={option.description}><span>{option.label}</span><small>Search ↗</small></a>)}</div>
+                <p className="listening-disclaimer">These links search the service for this episode title. Results and availability can vary by region and subscription; TKKGTracker does not verify individual search results.</p>
+              </details>
+            </section>;
+          })()}
           <section className="detail-section"><h3>Personal rating</h3><StarRating value={progress[String(selectedEpisode.number)]?.personalRating} onChange={(value) => updateEpisode(selectedEpisode.number, { personalRating: value })} /></section>
           <section className="detail-section personal-notes"><div className="section-label-row"><h3>Your notes</h3><span className="private-pill">Private · this device</span></div><label className="field-label">Personal comments<textarea value={progress[String(selectedEpisode.number)]?.notes ?? ""} onChange={(event) => updateEpisode(selectedEpisode.number, { notes: event.target.value })} rows={4} placeholder="What stood out? Favourite scenes, theories, memories…" /></label></section>
           {selectedEpisode.physical_releases.length > 0 && <section className="detail-section"><h3>Physical releases</h3><div className="detail-card-list">{selectedEpisode.physical_releases.map((release, index) => <div className="detail-card" key={index}><strong>{release.medium || "Edition"}</strong><span>{[release.label, release.ean, release.release_date].filter(Boolean).join(" · ") || "Edition details not available"}</span>{release.source_url && <a href={release.source_url} target="_blank" rel="noreferrer">View source ↗</a>}</div>)}</div></section>}
