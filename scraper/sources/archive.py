@@ -11,12 +11,12 @@ from scraper.http import SourceClient
 INDEX_URL = "https://www.tkkg-site.de/de/hoeren/hoerspiele/serie.html"
 ARCHIVE_PREFIX = "/de/hoeren/hoerspiele/"
 ARCHIVE_ORIGIN = "https://www.tkkg-site.de"
-EPISODE_LINK = re.compile(r"Folge\\s*0*(\\d{1,3})\\s*:?\\s*(.+)", re.IGNORECASE)
+EPISODE_LINK = re.compile(r"Folge\s*0*(\d{1,3})\s*:?\s*(.+)", re.IGNORECASE)
 HEADING_TAGS = {"h2", "h3", "h4", "h5"}
 
 
 def _clean(text: str) -> str:
-    return re.sub(r"\\s+", " ", text).strip()
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def _resolve_index_link(href: str) -> str:
@@ -66,7 +66,7 @@ def _section_lines(soup: BeautifulSoup, heading_text: str) -> list[str]:
         if isinstance(sibling, Tag) and sibling.name in HEADING_TAGS:
             break
         if isinstance(sibling, Tag):
-            value = sibling.get_text("\\n", strip=True)
+            value = sibling.get_text("\n", strip=True)
             lines.extend(_clean(line) for line in value.splitlines() if _clean(line))
         elif str(sibling).strip():
             lines.append(_clean(str(sibling)))
@@ -86,7 +86,7 @@ def _section_list_items(heading: Tag) -> list[str]:
         if isinstance(node, Tag) and node.name == "li":
             value = _clean(node.get_text(" ", strip=True))
             if value:
-                items.append(re.sub(r"^\\d+\\.\\s*", "", value))
+                items.append(re.sub(r"^\d+\.\s*", "", value))
     return items
 
 
@@ -94,7 +94,7 @@ def parse_archive_episode(client: SourceClient, discovered: dict) -> dict:
     soup = client.get_html(discovered["source_url"])
     heading = soup.find(["h1", "h2"])
     heading_text = _clean(heading.get_text(" ", strip=True)) if heading else discovered["title"]
-    title_match = re.match(r"Folge\\s*0*\\d+\\s*:\\s*(.+)", heading_text, re.IGNORECASE)
+    title_match = re.match(r"Folge\s*0*\d+\s*:\s*(.+)", heading_text, re.IGNORECASE)
     title = _clean(title_match.group(1)) if title_match else discovered["title"]
 
     record = {
@@ -112,17 +112,17 @@ def parse_archive_episode(client: SourceClient, discovered: dict) -> dict:
         "sources": [{"name": discovered["source_name"], "url": discovered["source_url"]}],
     }
 
-    image = soup.find("img", alt=re.compile(r"Folge\\s*0*" + str(discovered["number"]), re.IGNORECASE))
+    image = soup.find("img", alt=re.compile(r"Folge\s*0*" + str(discovered["number"]), re.IGNORECASE))
     if image:
         image_src = image.get("src") or image.get("data-src")
         if image_src:
             record["cover_url"] = urljoin(discovered["source_url"], image_src)
 
-    body_text = soup.get_text("\\n", strip=True)
-    medium = re.search(r"Medium:\\s*\\n([^\\n]+)", body_text, re.IGNORECASE)
-    label = re.search(r"Label:\\s*\\n([^\\n]+)", body_text, re.IGNORECASE)
-    release = re.search(r"Erscheinungstermin:\\s*\\n([^\\n]+)", body_text, re.IGNORECASE)
-    ean = re.search(r"EAN:\\s*\\n([^\\n]+)", body_text, re.IGNORECASE)
+    body_text = soup.get_text("\n", strip=True)
+    medium = re.search(r"Medium:\s*\n([^\n]+)", body_text, re.IGNORECASE)
+    label = re.search(r"Label:\s*\n([^\n]+)", body_text, re.IGNORECASE)
+    release = re.search(r"Erscheinungstermin:\s*\n([^\n]+)", body_text, re.IGNORECASE)
+    ean = re.search(r"EAN:\s*\n([^\n]+)", body_text, re.IGNORECASE)
     physical = {}
     if medium:
         physical["medium"] = _clean(medium.group(1))
@@ -133,7 +133,7 @@ def parse_archive_episode(client: SourceClient, discovered: dict) -> dict:
     if release:
         release_text = _clean(release.group(1))
         physical["release_date"] = release_text
-        year_match = re.search(r"\\b(19|20)\\d{2}\\b", release_text)
+        year_match = re.search(r"\b(19|20)\d{2}\b", release_text)
         if year_match:
             record["release_year"] = int(year_match.group(0))
     if physical:
@@ -162,14 +162,14 @@ def parse_archive_episode(client: SourceClient, discovered: dict) -> dict:
             record["cast"].append({"name": name, "character": character})
 
     for line in _section_lines(soup, "Produktion"):
-        match = re.match(r"([^:]{2,60}):\\s*(.+)", line)
+        match = re.match(r"([^:]{2,60}):\s*(.+)", line)
         if match:
             record["credits"].append({"role": _clean(match.group(1)), "name": _clean(match.group(2))})
 
-    ratings_match = re.search(r"Durchschnitts-\\s*bewertungen:(.*?)(?:Rang\\s*#?(\\d+))?", body_text, re.IGNORECASE | re.DOTALL)
+    ratings_match = re.search(r"Durchschnitts-\s*bewertungen:(.*?)(?:Rang\s*#?(\d+))?", body_text, re.IGNORECASE | re.DOTALL)
     if ratings_match:
         rating_text = _clean(ratings_match.group(1))
-        for category, value in re.findall(r"(Team|Mitglieder|Leser|Gesamt)\\s*(\\d+)%", rating_text, re.IGNORECASE):
+        for category, value in re.findall(r"(Team|Mitglieder|Leser|Gesamt)\s*(\d+)%", rating_text, re.IGNORECASE):
             record["ratings"].append({"source": "TKKG-Site archive", "category": category, "value": value + "%", "review_count": None})
 
     return record
