@@ -10,6 +10,7 @@ from scraper.http import SourceClient
 
 INDEX_URL = "https://www.tkkg-site.de/de/hoeren/hoerspiele/serie.html"
 EPISODE_LINK = re.compile(r"Folge\s*0*(\d{1,3})\s*:?\s*(.+)", re.IGNORECASE)
+HEADING_TAGS = {"h2", "h3", "h4", "h5"}
 
 
 def _clean(text: str) -> str:
@@ -40,12 +41,12 @@ def discover_archive_episodes(client: SourceClient) -> list[dict]:
 
 
 def _section_text(soup: BeautifulSoup, heading_text: str) -> str | None:
-    target = next((h for h in soup.find_all(["h2", "h3", "h4", "h5"]) if _clean(h.get_text(" ", strip=True)).casefold() == heading_text.casefold()), None)
+    target = next((h for h in soup.find_all(list(HEADING_TAGS)) if _clean(h.get_text(" ", strip=True)).casefold() == heading_text.casefold()), None)
     if target is None:
         return None
     chunks: list[str] = []
     for sibling in target.next_siblings:
-        if isinstance(sibling, Tag) and sibling.name in {"h2", "h3", "h4", "h5"}:
+        if isinstance(sibling, Tag) and sibling.name in HEADING_TAGS:
             break
         if isinstance(sibling, Tag):
             text = _clean(sibling.get_text(" ", strip=True))
@@ -55,6 +56,18 @@ def _section_text(soup: BeautifulSoup, heading_text: str) -> str | None:
             chunks.append(_clean(str(sibling)))
     result = _clean(" ".join(chunks))
     return result or None
+
+
+def _section_list_items(heading: Tag) -> list[str]:
+    items: list[str] = []
+    for node in heading.next_elements:
+        if isinstance(node, Tag) and node.name in HEADING_TAGS:
+            break
+        if isinstance(node, Tag) and node.name == "li":
+            value = _clean(node.get_text(" ", strip=True))
+            if value:
+                items.append(re.sub(r"^\d+\.\s*", "", value))
+    return items
 
 
 def parse_archive_episode(client: SourceClient, discovered: dict) -> dict:
@@ -81,7 +94,9 @@ def parse_archive_episode(client: SourceClient, discovered: dict) -> dict:
 
     image = soup.find("img", alt=re.compile(r"Folge\s*0*" + str(discovered["number"]), re.IGNORECASE))
     if image:
-        record["cover_url"] = urljoin(discovered["source_url"], image.get("src") or image.get("data-src") or "")
+        image_src = image.get("src") or image.get("data-src")
+        if image_src:
+            record["cover_url"] = urljoin(discovered["source_url"], image_src)
 
     body_text = soup.get_text("\n", strip=True)
     medium = re.search(r"Medium:\s*\n([^\n]+)", body_text, re.IGNORECASE)
@@ -105,25 +120,26 @@ def parse_archive_episode(client: SourceClient, discovered: dict) -> dict:
         physical["source_url"] = discovered["source_url"]
         record["physical_releases"].append(physical)
 
-    tracks_heading = next((h for h in soup.find_all(["h2", "h3", "h4", "h5"]) if "trackpunkte" in _clean(h.get_text(" ", strip=True)).casefold() or "cd-tracks" in _clean(h.get_text(" ", strip=True)).casefold()), None)
+    tracks_heading = next((h for h in soup.find_all(list(HEADING_TAGS)) if "trackpunkte" in _clean(h.get_text(" ", strip=True)).casefold() or "cd-tracks" in _clean(h.get_text(" ", strip=True)).casefold()), None)
     if tracks_heading:
-        for item in tracks_heading.find_all_next(["li"]):
-            if item.find(["h2", "h3", "h4", "h5"]):
-                break
-            title_text = _clean(item.get_text(" ", strip=True))
-            if title_text:
-                record["tracks"].append({"title": re.sub(r"^\d+\.\s*", "", title_text)})
+        record["tracks"] = [{"title": title} for title in _section_list_items(tracks_heading)]
 
-    speaker_heading = next((h for h in soup.find_all(["h2", "h3", "h4", "h5"]) if _clean(h.get_text(" ", strip=True)).casefold() == "sprecher"), None)
+    speaker_heading = next((h for h in soup.find_all(list(HEADING_TAGS)) if _clean(h.get_text(" ", strip=True)).casefold() == "sprecher"), None)
     if speaker_heading:
-        for name_link in speaker_heading.find_all_next("a"):
-            parent_text = _clean(name_link.parent.get_text(" ", strip=True))
-            name = _clean(name_link.get_text(" ", strip=True))
-            if name and parent_text and name in parent_text:
-                character = _clean(parent_text.replace(name, "").strip(" :"))
-                record["cast"].append({"name": name, "character": character or None})
-            if len(record["cast"]) >= 100:
+        for node in speaker_heading.next_elements:
+            if isinstance(node, Tag) and node.name in HEADING_TAGS:
                 break
+            if not isinstance(node, Tag) or node.name != "a":
+                continue
+            name = _clean(node.get_text(" ", strip=True))
+            if not name:
+                continue
+            character = None
+            dt = node.find_previous("dt")
+            if dt and dt.find_previous("h1") is not None:
+                character_text = _clean(dt.get_text(" ", strip=True)).rstrip(":")
+                character = character_text or None
+            record["cast"].append({"name": name, "character": character})
 
     production_text = _section_text(soup, "Produktion")
     if production_text:
