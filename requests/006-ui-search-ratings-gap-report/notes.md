@@ -1,6 +1,6 @@
 # Implementation notes: UI redesign, advanced search, and missing-data reports
 
-**Status:** Implemented on the request branch; awaiting final CI verification and manual browser review. Not merged or deployed.
+**Status:** Implemented on PR #6; automated CI passed for the current implementation. Not merged or deployed.
 
 ## Implementation outcomes
 
@@ -15,12 +15,12 @@
 
 - Initial PR workflow run: Python tests passed.
 - Initial frontend workflow run: `npm install`, `npm audit --audit-level=high`, `npm run typecheck`, `npm test`, and `npm run build` all passed for commit `7cf7508564991f388aefe0b28a4242809a7275f9`.
-- Follow-up fix added free-text speaker/character search and restored focus to the report trigger. That latest commit still needs its own CI confirmation.
+- Follow-up fix added free-text speaker/character search and restored focus to the report trigger. The later PR workflow run passed all Python and frontend steps.
 - Manual desktop/mobile, keyboard-only, screen-reader, and live-browser checks have not been run in this environment.
 
 ## Remaining issues
 
-- Confirm CI for the latest branch head.
+- Manual browser review remains outstanding.
 - Manual browser review remains recommended before merging/deploying.
 - No live deployment was initiated.
 
