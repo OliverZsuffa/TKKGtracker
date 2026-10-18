@@ -4,7 +4,7 @@ Record actual observations after the implementation is deployed. Do not mark a t
 
 ## Automated checks
 
-- [ ] GitHub Actions frontend checks pass: dependency audit, typecheck, unit tests, production build.
+- [x] GitHub Actions frontend checks pass: dependency audit, typecheck, unit tests, production build.
 - [ ] Confirm the build contains `manifest.webmanifest`, `service-worker.js`, the icon, and `data/episodes.json` under the GitHub Pages base path.
 - [ ] Confirm the catalogue-refresh workflow retains its weekly schedule and successful refresh still triggers deployment.
 

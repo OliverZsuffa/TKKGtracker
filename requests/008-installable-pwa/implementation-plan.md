@@ -1,6 +1,6 @@
 # Implementation plan: Installable Android PWA
 
-**Status:** Approved; implementation is in progress on `request/008-installable-pwa`.
+**Status:** Implemented and merged via PR #10, with the first-load offline cache improvement merged via PR #11. Automated CI and production deployment succeeded; Android manual verification remains outstanding.
 
 ## 1. Establish the baseline
 
