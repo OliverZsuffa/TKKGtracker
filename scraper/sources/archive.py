@@ -162,7 +162,8 @@ def _release_metadata(soup: BeautifulSoup) -> dict[str, str]:
     # column. Find the closest ancestor shared by all label elements, then read
     # the sibling column in document order.
     common_ancestor = None
-    first_chain = [label_nodes[labels[0]], *label_nodes[labels[0]].parents]
+    first_node = next(iter(label_nodes.values()))
+    first_chain = [first_node, *first_node.parents]
     for ancestor in first_chain:
         if all(any(parent is ancestor for parent in node.parents) for node in label_nodes.values()):
             common_ancestor = ancestor
@@ -184,6 +185,22 @@ def _release_metadata(soup: BeautifulSoup) -> dict[str, str]:
                 values = [value for value in values if value]
                 if len(values) >= len(label_nodes) and not any(value.casefold() in {f"{label.casefold()}:" for label in labels} for value in values):
                     return {label: values[index] for index, label in enumerate(label_nodes) if index < len(values)}
+
+    # Some layouts place all labels first and all values immediately after them
+    # inside one shared container. Preserve label order even when a label is absent.
+    nodes = list(label_nodes.values())
+    parents = [node.parent for node in nodes]
+    if parents and all(parent is parents[0] for parent in parents) and isinstance(parents[0], Tag):
+        siblings = parents[0].find_all(recursive=False)
+        positions = [siblings.index(node) for node in nodes if node in siblings]
+        if len(positions) == len(nodes) and positions == list(range(min(positions), min(positions) + len(positions))):
+            values = [
+                _clean(item.get_text(" ", strip=True))
+                for item in siblings[max(positions) + 1:]
+                if _clean(item.get_text(" ", strip=True))
+            ]
+            if len(values) >= len(label_nodes):
+                return {label: values[index] for index, label in enumerate(label_nodes)}
 
     # Other pages (and small fixture pages) use adjacent label/value elements.
     result: dict[str, str] = {}
