@@ -1,13 +1,9 @@
 from __future__ import annotations
 
 import unittest
-from pathlib import Path
 
 from scraper.merge import merge_records
 from scraper.validate import find_number_gaps, validate_catalogue
-
-
-ROOT = Path(__file__).resolve().parents[1]
 
 
 def episode(number: int, title: str, **extra) -> dict:
@@ -45,6 +41,9 @@ class CatalogueTests(unittest.TestCase):
 
     def test_gaps_are_reported(self):
         self.assertEqual(find_number_gaps([episode(1, "A"), episode(3, "C")]), [2])
+
+    def test_missing_first_episode_is_reported(self):
+        self.assertEqual(find_number_gaps([episode(2, "B"), episode(3, "C")]), [1])
 
     def test_merge_preserves_metadata_and_sources(self):
         base = episode(1, "A")
