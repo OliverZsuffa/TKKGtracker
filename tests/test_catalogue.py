@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 
 from scraper.merge import merge_records
-from scraper.validate import find_number_gaps, validate_catalogue
+from scraper.validate import find_number_gaps, listening_link_coverage, validate_catalogue
 
 
 def episode(number: int, title: str, **extra) -> dict:
@@ -108,6 +108,24 @@ class CatalogueTests(unittest.TestCase):
         merged, conflicts = merge_records([base, enrichment])
         self.assertEqual(conflicts, [])
         self.assertEqual(merged[0]["listening_links"], enrichment["listening_links"])
+
+    def test_listening_link_coverage_reports_hubs_and_missing_episodes(self):
+        linked = episode(1, "A", listening_links=[{
+            "service": "official",
+            "label": "Official listening page",
+            "url": "https://tkkg.lnk.to/-001AW",
+            "link_type": "official_hub",
+            "source_url": "https://www.tkkg.de/produkte/hoerspiele",
+        }])
+        coverage = listening_link_coverage([linked, episode(2, "B")])
+        self.assertEqual(coverage["episode_count"], 2)
+        self.assertEqual(coverage["episodes_with_listening_links"], 1)
+        self.assertEqual(coverage["episodes_without_listening_links"], [{"number": 2, "title": "B"}])
+        self.assertEqual(coverage["links_by_service"], {"official": 1})
+        self.assertEqual(coverage["links_by_type"], {"official_hub": 1})
+        self.assertEqual(coverage["direct_episode_or_release_link_count"], 0)
+        self.assertEqual(coverage["hub_or_fallback_link_count"], 1)
+        self.assertEqual(coverage["invalid_links"], [])
 
     def test_title_conflicts_are_reported(self):
         merged, conflicts = merge_records([episode(1, "A"), episode(1, "Different")])
