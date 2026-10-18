@@ -17,6 +17,7 @@ from scraper.validate import find_number_gaps, validate_catalogue
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 REPORT_PATH = DATA_DIR / "scrape-report.json"
+HISTORICAL_INDEX_LATEST = 217
 
 
 def main() -> int:
@@ -35,6 +36,7 @@ def main() -> int:
     try:
         archive_entries = discover_archive_episodes(client)
         report["sources"]["archive_index_entries"] = len(archive_entries)
+        report["sources"]["archive_index_max_number"] = max((entry["number"] for entry in archive_entries), default=0)
         archive_records = []
         for entry in archive_entries:
             try:
@@ -47,9 +49,10 @@ def main() -> int:
 
         official_records = discover_official_episodes(client)
         report["sources"]["official_records"] = len(official_records)
+        report["sources"]["official_max_number"] = max((item["number"] for item in official_records), default=0)
         report["sources"]["archive_detail_records"] = len(archive_records)
 
-        # Archive records are the preferred title source for the episodes it explicitly indexes.
+        # Archive records are the preferred title source for episodes it explicitly indexes.
         archive_records.sort(key=lambda item: item["number"])
         official_records.sort(key=lambda item: item["number"])
         combined = archive_records + official_records
@@ -58,9 +61,18 @@ def main() -> int:
         report["gaps"] = find_number_gaps(episodes)
         report["episode_count"] = len(episodes)
 
-        # A source outage or empty result must never overwrite a previously valid catalogue.
-        if len(episodes) < 200:
+        # The archive currently indexes through episode 217. Require the official source to
+        # contribute a newer episode, but do not hard-code the current maximum episode number.
+        archive_max = report["sources"]["archive_index_max_number"]
+        official_max = report["sources"]["official_max_number"]
+        if archive_max < HISTORICAL_INDEX_LATEST:
+            raise RuntimeError(f"Historical archive coverage unexpectedly ends at episode {archive_max}.")
+        if official_max <= archive_max:
+            raise RuntimeError(f"Official catalogue did not supply episodes beyond the archive index (max {official_max}).")
+        if len(episodes) < HISTORICAL_INDEX_LATEST + 1:
             raise RuntimeError(f"Only {len(episodes)} episodes discovered; refusing to publish a suspiciously small catalogue.")
+        if report["gaps"]:
+            raise RuntimeError(f"Unexplained numbering gaps detected: {report['gaps']}. Refusing to publish an incomplete catalogue.")
 
         # Provenance timestamps are part of the schema, so add them before validation.
         for episode in episodes:
@@ -72,8 +84,6 @@ def main() -> int:
         report["validation_errors"] = errors
         if errors:
             raise RuntimeError(f"Catalogue schema validation failed with {len(errors)} error(s).")
-        if report["gaps"]:
-            report["warnings"].append(f"Numbering gaps detected: {report['gaps']}")
         if conflicts:
             report["warnings"].append(f"Conflicting titles detected for {len(conflicts)} episode number(s); first source value retained.")
 
@@ -81,7 +91,7 @@ def main() -> int:
         report["success"] = True
         report["finished_at"] = datetime.now(timezone.utc).isoformat()
         REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        print(f"Published {len(episodes)} episode records. Gaps: {len(report['gaps'])}. Conflicts: {len(conflicts)}.")
+        print(f"Published {len(episodes)} episode records. Conflicts: {len(conflicts)}.")
         return 0
     except Exception as exc:
         report["fatal_error"] = str(exc)
