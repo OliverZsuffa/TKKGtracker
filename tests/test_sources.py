@@ -64,8 +64,8 @@ class SourceParserTests(unittest.TestCase):
                 <h3>Die Fährte des Hehlers</h3>
                 <h4>TKKG Hörspiel-Folge 243</h4>
                 <h5>Inhalt</h5><p>Ein Fall mit einem Hehler.</p>
-                <h5>Sprecher</h5><p>Tim - Sascha Draeger</p>
-                <h5>Details</h5><p>Produktion und Regie: Heikedine Körting</p>
+                <h5>Sprecher</h5><p>Tim - Sascha Draeger</p><p>Karl - Tobias Diakow</p>
+                <h5>Details</h5><p>Produktion und Regie: Heikedine Körting</p><p>Redaktion: Petra Delmar</p>
               </article>
             '''
         })
@@ -74,6 +74,8 @@ class SourceParserTests(unittest.TestCase):
         self.assertEqual(records[0]["number"], 243)
         self.assertEqual(records[0]["title"], "Die Fährte des Hehlers")
         self.assertEqual(records[0]["synopsis"], "Ein Fall mit einem Hehler.")
+        self.assertEqual(len(records[0]["cast"]), 2)
+        self.assertEqual(len(records[0]["credits"]), 2)
         self.assertTrue(records[0]["cover_url"].endswith("/cover.jpg"))
 
     def test_tumblr_post_extracts_release_and_tracks(self):
