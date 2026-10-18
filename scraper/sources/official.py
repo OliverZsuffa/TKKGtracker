@@ -98,7 +98,7 @@ def _base_record(number: int, title: str, url: str, synopsis: str | None, cover_
 def _copyright_year(panel: Tag | BeautifulSoup) -> int | None:
     """Return a year explicitly stated in the episode's Details copyright line."""
     for line in _section_lines(panel, "Details"):
-        if re.search(r"\b©\s*", line):
+        if re.search(r"©\s*", line):
             match = re.search(r"\b©\s*((?:19|20)\d{2})\b", line)
             if match:
                 return int(match.group(1))
