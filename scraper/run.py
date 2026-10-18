@@ -96,14 +96,14 @@ def main() -> int:
         write_catalogue(episodes, DATA_DIR)
         report["success"] = True
         report["finished_at"] = datetime.now(timezone.utc).isoformat()
-        REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
+        REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(f"Published {len(episodes)} episode records. Conflicts: {len(conflicts)}.")
         return 0
     except Exception as exc:
         report["fatal_error"] = str(exc)
         report["finished_at"] = datetime.now(timezone.utc).isoformat()
         REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
-        REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
+        REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(f"Catalogue refresh failed: {exc}", file=sys.stderr)
         return 1
 
