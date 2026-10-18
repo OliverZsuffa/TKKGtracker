@@ -18,7 +18,7 @@ All substantial work must have a request folder under requests/. Each request co
 
 For a new task, investigate only what is necessary, create or update the request documents, draft request-specific manual tests, summarise the plan, and wait for Oliver's explicit approval before implementing. If a material change to an approved plan becomes necessary, explain it and request approval before proceeding.
 
-After approval, implement only the approved scope. Run relevant tests and build checks when the environment permits, review the diff, and update the request documents. Never claim a check was run unless it actually was. Preserve Oliver's recorded test results and notes. Do not mark a request complete on Oliver's behalf.
+After approval, implement only the approved scope. Run relevant tests and build checks when the environment permits, review the diff, and update the request documents. Never claim a check was run unless it actually was. Preserve Oliver's recorded test results and notes. Once implementation and review are complete, merge the pull request without waiting for another instruction; Oliver will inspect the result after merging. Do not claim tests passed when they were not run, and do not mark a request complete on Oliver's behalf.
 
 ## Knowledge base
 Reusable architecture, patterns, and lessons belong in docs/knowledge/. Request-specific plans and results stay in the request folder. Approved product or architecture decisions belong in docs/decisions.md. Do not record guesses as facts. Update existing knowledge rather than creating duplicate notes.
