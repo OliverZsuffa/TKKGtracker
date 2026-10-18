@@ -159,32 +159,29 @@ def _release_metadata(soup: BeautifulSoup) -> dict[str, str]:
         return {}
 
     # Some archive pages render labels in one column and values in a parallel
-    # column. Find the closest ancestor shared by all label elements, then read
-    # the sibling column in document order.
-    common_ancestor = None
+    # column. Search upward until the labels share one direct-child column.
     first_node = next(iter(label_nodes.values()))
     first_chain = [first_node, *first_node.parents]
-    for ancestor in first_chain:
-        if all(any(parent is ancestor for parent in node.parents) for node in label_nodes.values()):
-            common_ancestor = ancestor
-            break
-
-    if common_ancestor is not None:
+    for common_ancestor in first_chain:
+        if not all(any(parent is common_ancestor for parent in node.parents) for node in label_nodes.values()):
+            continue
         child_paths = {}
         for label, node in label_nodes.items():
             child = node
             while child.parent is not common_ancestor and child.parent is not None:
                 child = child.parent
             child_paths[label] = child
-        if len(set(map(id, child_paths.values()))) == 1:
-            label_column = next(iter(child_paths.values()))
-            for sibling in common_ancestor.find_all(recursive=False):
-                if sibling is label_column:
-                    continue
-                values = [_clean(line) for line in sibling.get_text("\n", strip=True).splitlines()]
-                values = [value for value in values if value]
-                if len(values) >= len(label_nodes) and not any(value.casefold() in {f"{label.casefold()}:" for label in labels} for value in values):
-                    return {label: values[index] for index, label in enumerate(label_nodes) if index < len(values)}
+        if len(set(map(id, child_paths.values()))) != 1:
+            continue
+        label_column = next(iter(child_paths.values()))
+        for sibling in common_ancestor.find_all(recursive=False):
+            if sibling is label_column:
+                continue
+            values = [_clean(line) for line in sibling.get_text("\n", strip=True).splitlines()]
+            values = [value for value in values if value]
+            label_texts = {label.casefold() + ":" for label in labels}
+            if len(values) >= len(label_nodes) and not any(value.casefold() in label_texts for value in values):
+                return {label: values[index] for index, label in enumerate(label_nodes) if index < len(values)}
 
     # Some layouts place all labels first and all values immediately after them
     # inside one shared container. Preserve label order even when a label is absent.
