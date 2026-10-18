@@ -144,7 +144,53 @@ class SourceParserTests(unittest.TestCase):
         self.assertEqual(record["synopsis"], "Ein spannender Fall.")
         self.assertEqual(record["release_year"], 1981)
         self.assertEqual(len(record["tracks"]), 2)
-        self.assertEqual(record["physical_releases"][0]["label"], "EUROPA")
+        physical = record["physical_releases"][0]
+        self.assertEqual(physical["medium"], "LP / MC / CD")
+        self.assertEqual(physical["label"], "EUROPA")
+        self.assertEqual(physical["release_date"], "1981 (LP / MC) / 12. Mai 2003 (CD)")
+        self.assertEqual(physical["ean"], "743219895943 (MC)")
+
+    def test_archive_release_metadata_reads_parallel_label_and_value_columns(self):
+        url = "https://www.tkkg-site.de/de/hoeren/hoerspiele/serie/folge-001/inhalt.html"
+        client = FakeClient({url: '''
+          <h1>Folge 001: Die Jagd nach den Millionendieben</h1>
+          <div class="release-row">
+            <div class="release-labels">
+              <p>Medium:</p><p>Label:</p><p>Erscheinungstermin:</p><p>EAN:</p>
+            </div>
+            <div class="release-values">
+              <p>LP / MC / CD</p><p>EUROPA</p>
+              <p>1981 (LP / MC) / 12. Mai 2003 (CD)</p>
+              <p>743219895943 (MC) / 743219895929 (CD)</p>
+            </div>
+          </div>
+        '''})
+        discovered = {"number": 1, "title": "Die Jagd nach den Millionendieben", "source_url": url, "source_name": "TKKG-Site archive"}
+        record = parse_archive_episode(client, discovered)
+        physical = record["physical_releases"][0]
+        self.assertEqual(physical["medium"], "LP / MC / CD")
+        self.assertEqual(physical["label"], "EUROPA")
+        self.assertEqual(physical["release_date"], "1981 (LP / MC) / 12. Mai 2003 (CD)")
+        self.assertEqual(physical["ean"], "743219895943 (MC) / 743219895929 (CD)")
+        self.assertEqual(record["release_year"], 1981)
+
+    def test_archive_release_metadata_omits_missing_fields_without_shifting_values(self):
+        url = "https://www.tkkg-site.de/de/hoeren/hoerspiele/serie/folge-003/inhalt.html"
+        client = FakeClient({url: '''
+          <h1>Folge 003: Das leere Grab im Moor</h1>
+          <div class="release-row">
+            <div class="release-labels"><p>Medium:</p><p>Label:</p><p>EAN:</p></div>
+            <div class="release-values"><p>MC</p><p>EUROPA</p><p>743219896032</p></div>
+          </div>
+        '''})
+        discovered = {"number": 3, "title": "Das leere Grab im Moor", "source_url": url, "source_name": "TKKG-Site archive"}
+        record = parse_archive_episode(client, discovered)
+        physical = record["physical_releases"][0]
+        self.assertEqual(physical["medium"], "MC")
+        self.assertEqual(physical["label"], "EUROPA")
+        self.assertEqual(physical["ean"], "743219896032")
+        self.assertNotIn("release_date", physical)
+        self.assertIsNone(record["release_year"])
 
     def test_official_page_extracts_details_from_linked_teaser_and_collapse_panel(self):
         url = "https://www.tkkg.de/produkte/hoerspiele"
