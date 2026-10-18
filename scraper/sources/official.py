@@ -17,8 +17,8 @@ def _clean(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def _section_lines(card: Tag, label: str) -> list[str]:
-    headings = card.find_all(["h5", "h6"])
+def _section_lines(panel: Tag, label: str) -> list[str]:
+    headings = panel.find_all(["h5", "h6"])
     target = next((h for h in headings if _clean(h.get_text(" ", strip=True)).casefold() == label.casefold()), None)
     if target is None:
         return []
@@ -34,19 +34,37 @@ def _section_lines(card: Tag, label: str) -> list[str]:
     return lines
 
 
-def _section(card: Tag, label: str) -> str | None:
-    lines = _section_lines(card, label)
-    result = _clean(" ".join(lines))
+def _section(panel: Tag, label: str) -> str | None:
+    result = _clean(" ".join(_section_lines(panel, label)))
     return result or None
 
 
-def _find_card(heading: Tag) -> Tag | None:
+def _find_detail_panel(heading: Tag) -> Tag | None:
+    """Find the collapsed detail panel containing this episode heading."""
     for parent in heading.parents:
         if not isinstance(parent, Tag):
             continue
-        if len(parent.find_all("h4")) == 1 and parent.find("img"):
+        classes = parent.get("class", [])
+        if (
+            parent.name == "div"
+            and parent.get("id")
+            and "collapse" in classes
+            and len(parent.find_all("h4")) == 1
+        ):
             return parent
     return None
+
+
+def _find_product_teaser(panel: Tag) -> Tag | None:
+    """Pair the detail panel with its adjacent teaser through the site's data-modal id."""
+    panel_id = panel.get("id")
+    teaser = panel.find_previous_sibling("div")
+    if not panel_id or not isinstance(teaser, Tag):
+        return None
+    trigger = teaser.find("a", attrs={"data-modal": f"#{panel_id}"})
+    if trigger is None or teaser.find("img") is None or teaser.find(["h2", "h3"]) is None:
+        return None
+    return teaser
 
 
 def parse_official_page(client: SourceClient, page_number: int, diagnostics: list[dict] | None = None) -> list[dict]:
@@ -58,20 +76,32 @@ def parse_official_page(client: SourceClient, page_number: int, diagnostics: lis
         if not match:
             continue
         number = int(match.group(1))
-        card = _find_card(episode_heading)
-        if card is None:
+        panel = _find_detail_panel(episode_heading)
+        if panel is None:
             if diagnostics is not None:
                 diagnostics.append({
                     "number": number,
                     "title": None,
                     "source_url": url,
-                    "reason": "episode-number heading is not inside a product card with one episode heading and a cover image",
+                    "reason": "episode-number heading is not inside a uniquely identified collapsed detail panel",
                 })
             continue
 
-        title_heading = card.find(["h2", "h3"])
+        teaser = _find_product_teaser(panel)
+        if teaser is None:
+            if diagnostics is not None:
+                diagnostics.append({
+                    "number": number,
+                    "title": None,
+                    "source_url": url,
+                    "detail_panel_id": panel.get("id"),
+                    "reason": "detail panel has no adjacent product teaser linked by its data-modal id",
+                })
+            continue
+
+        title_heading = teaser.find(["h2", "h3"])
         title = _clean(title_heading.get_text(" ", strip=True)) if title_heading else ""
-        image = card.find("img")
+        image = teaser.find("img")
         alt = _clean(image.get("alt", "")) if image else ""
         alt_match = EPISODE_HEADING.search(alt)
         if alt_match and int(alt_match.group(1)) != number:
@@ -80,6 +110,7 @@ def parse_official_page(client: SourceClient, page_number: int, diagnostics: lis
                     "number": number,
                     "title": title or None,
                     "source_url": url,
+                    "detail_panel_id": panel.get("id"),
                     "image_alt": alt,
                     "reason": f"episode heading number {number} conflicts with cover image number {int(alt_match.group(1))}",
                 })
@@ -94,6 +125,7 @@ def parse_official_page(client: SourceClient, page_number: int, diagnostics: lis
                     "number": number,
                     "title": title or None,
                     "source_url": url,
+                    "detail_panel_id": panel.get("id"),
                     "reason": "missing product title or excluded special product",
                 })
             continue
@@ -104,14 +136,14 @@ def parse_official_page(client: SourceClient, page_number: int, diagnostics: lis
             if image_src:
                 image_url = urljoin(url, image_src)
 
-        synopsis = _section(card, "Inhalt")
+        synopsis = _section(panel, "Inhalt")
         cast = []
-        for line in _section_lines(card, "Sprecher"):
+        for line in _section_lines(panel, "Sprecher"):
             if " - " in line:
                 character, name = line.split(" - ", 1)
                 cast.append({"name": _clean(name), "character": _clean(character)})
         credits = []
-        for line in _section_lines(card, "Details"):
+        for line in _section_lines(panel, "Details"):
             if ":" in line:
                 role, name = line.split(":", 1)
                 credits.append({"role": _clean(role), "name": _clean(name)})
