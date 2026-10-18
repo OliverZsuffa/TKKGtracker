@@ -9,12 +9,12 @@ from scraper.http import SourceClient
 
 
 BASE_URL = "https://www.tkkg.de/produkte/hoerspiele"
-EPISODE_HEADING = re.compile(r"TKKG\s+Hörspiel-Folge\s+(\d+)", re.IGNORECASE)
+EPISODE_HEADING = re.compile(r"TKKG\\s+Hörspiel-Folge\\s+(\\d+)", re.IGNORECASE)
 HEADING_TAGS = {"h5", "h6"}
 
 
 def _clean(text: str) -> str:
-    return re.sub(r"\s+", " ", text).strip()
+    return re.sub(r"\\s+", " ", text).strip()
 
 
 def _section_lines(card: Tag, label: str) -> list[str]:
@@ -27,7 +27,7 @@ def _section_lines(card: Tag, label: str) -> list[str]:
         if isinstance(sibling, Tag) and sibling.name in HEADING_TAGS:
             break
         if isinstance(sibling, Tag):
-            value = sibling.get_text("\n", strip=True)
+            value = sibling.get_text("\\n", strip=True)
             lines.extend(_clean(line) for line in value.splitlines() if _clean(line))
         elif str(sibling).strip():
             lines.append(_clean(str(sibling)))
@@ -40,16 +40,16 @@ def _section(card: Tag, label: str) -> str | None:
     return result or None
 
 
-def _find_card(heading: Tag) -> Tag:
+def _find_card(heading: Tag) -> Tag | None:
     for parent in heading.parents:
         if not isinstance(parent, Tag):
             continue
         if len(parent.find_all("h4")) == 1 and parent.find("img"):
             return parent
-    return heading.parent if isinstance(heading.parent, Tag) else heading
+    return None
 
 
-def parse_official_page(client: SourceClient, page_number: int) -> list[dict]:
+def parse_official_page(client: SourceClient, page_number: int, diagnostics: list[dict] | None = None) -> list[dict]:
     url = BASE_URL if page_number == 0 else f"{BASE_URL}?page={page_number}"
     soup = client.get_html(url)
     records: list[dict] = []
@@ -59,17 +59,45 @@ def parse_official_page(client: SourceClient, page_number: int) -> list[dict]:
             continue
         number = int(match.group(1))
         card = _find_card(episode_heading)
-        title_heading = episode_heading.find_previous(["h2", "h3"])
-        title = _clean(title_heading.get_text(" ", strip=True)) if title_heading else ""
-        if not title:
-            image = card.find("img")
-            alt = _clean(image.get("alt", "")) if image else ""
-            title_match = re.search(r"Folge\s+\d+\s*:\s*(.+)$", alt, re.IGNORECASE)
-            title = _clean(title_match.group(1)) if title_match else ""
-        if not title or any(term in title.casefold() for term in ("live-album", "live album", "hörspiel-box", "krimi-box")):
+        if card is None:
+            if diagnostics is not None:
+                diagnostics.append({
+                    "number": number,
+                    "title": None,
+                    "source_url": url,
+                    "reason": "episode-number heading is not inside a product card with one episode heading and a cover image",
+                })
             continue
 
+        title_heading = card.find(["h2", "h3"])
+        title = _clean(title_heading.get_text(" ", strip=True)) if title_heading else ""
         image = card.find("img")
+        alt = _clean(image.get("alt", "")) if image else ""
+        alt_match = EPISODE_HEADING.search(alt)
+        if alt_match and int(alt_match.group(1)) != number:
+            if diagnostics is not None:
+                diagnostics.append({
+                    "number": number,
+                    "title": title or None,
+                    "source_url": url,
+                    "image_alt": alt,
+                    "reason": f"episode heading number {number} conflicts with cover image number {int(alt_match.group(1))}",
+                })
+            continue
+
+        if not title:
+            title_match = re.search(r"Folge\\s+\\d+\\s*:\\s*(.+)$", alt, re.IGNORECASE)
+            title = _clean(title_match.group(1)) if title_match else ""
+        if not title or any(term in title.casefold() for term in ("live-album", "live album", "hörspiel-box", "krimi-box")):
+            if diagnostics is not None:
+                diagnostics.append({
+                    "number": number,
+                    "title": title or None,
+                    "source_url": url,
+                    "reason": "missing product title or excluded special product",
+                })
+            continue
+
         image_url = None
         if image:
             image_src = image.get("src") or image.get("data-src") or image.get("data-lazy-src")
@@ -105,11 +133,11 @@ def parse_official_page(client: SourceClient, page_number: int) -> list[dict]:
     return records
 
 
-def discover_official_episodes(client: SourceClient, max_pages: int = 30) -> list[dict]:
+def discover_official_episodes(client: SourceClient, max_pages: int = 30, diagnostics: list[dict] | None = None) -> list[dict]:
     records: dict[tuple[int, str], dict] = {}
     empty_pages = 0
     for page in range(max_pages):
-        page_records = parse_official_page(client, page)
+        page_records = parse_official_page(client, page, diagnostics)
         if not page_records:
             empty_pages += 1
             if empty_pages >= 2:
