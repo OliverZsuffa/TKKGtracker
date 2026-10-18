@@ -3,8 +3,13 @@ name: Update episode catalogue
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - "data/**"
+    paths:
+      - "scraper/**"
+      - "schemas/**"
+      - "tests/**"
+      - "requirements.txt"
+      - "pyproject.toml"
+      - ".github/workflows/update-catalogue.yml"
   workflow_dispatch:
   schedule:
     - cron: "23 5 * * 1"
