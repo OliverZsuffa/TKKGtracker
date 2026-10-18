@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from unittest.mock import Mock, patch
 
-from scraper.http import SourceClient
+from scraper.http import SourceAccessError, SourceClient
 
 
 class FakeResponse:
@@ -18,6 +18,22 @@ class FakeResponse:
 
 
 class SourceClientTests(unittest.TestCase):
+    def test_robots_denial_is_cached_and_fails_closed(self):
+        class DeniedResponse:
+            status_code = 403
+            text = "Forbidden"
+
+        client = SourceClient(delay_seconds=0)
+        denied = DeniedResponse()
+        with patch.object(client.session, "get", return_value=denied) as get:
+            for url in (
+                "https://audio.tkkg-site.de/post/episode-207",
+                "https://audio.tkkg-site.de/post/episode-208",
+            ):
+                with self.assertRaisesRegex(SourceAccessError, "robots.txt.*HTTP 403"):
+                    client.get_html(url)
+        self.assertEqual(get.call_count, 1)
+
     def test_get_html_decodes_declared_utf8_from_response_bytes_and_caches_bytes(self):
         url = "https://example.test/episode"
         payload = '<meta charset="utf-8"><p>Mörderischer Stammbaum</p>'.encode("utf-8")

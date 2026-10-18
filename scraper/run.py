@@ -45,14 +45,29 @@ def main() -> int:
                 elif entry["number"] >= 207 and "audio.tkkg-site.de" in entry["source_url"]:
                     archive_records.append(parse_tumblr_episode(client, entry))
             except SourceAccessError as exc:
-                report["warnings"].append({
-                    "source": "archive",
-                    "number": entry.get("number"),
-                    "title": entry.get("title"),
-                    "source_url": entry.get("source_url"),
-                    "stage": "fetch",
-                    "error": str(exc),
-                })
+                source_url = entry.get("source_url", "")
+                if "audio.tkkg-site.de" in source_url:
+                    if not any(isinstance(warning, dict) and warning.get("source") == "audio.tkkg-site.de" for warning in report["warnings"]):
+                        audio_numbers = [
+                            item["number"] for item in archive_entries
+                            if "audio.tkkg-site.de" in item.get("source_url", "")
+                        ]
+                        report["warnings"].append({
+                            "source": "audio.tkkg-site.de",
+                            "numbers": audio_numbers,
+                            "stage": "robots" if "robots.txt" in str(exc) else "fetch",
+                            "error": str(exc),
+                            "note": "These episodes are covered by the official catalogue. Access controls were not bypassed.",
+                        })
+                else:
+                    report["warnings"].append({
+                        "source": "archive",
+                        "number": entry.get("number"),
+                        "title": entry.get("title"),
+                        "source_url": source_url,
+                        "stage": "fetch",
+                        "error": str(exc),
+                    })
 
         official_diagnostics: list[dict] = []
         official_records = discover_official_episodes(client, diagnostics=official_diagnostics)

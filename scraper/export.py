@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 CSV_FIELDS = [
-    "number", "title", "synopsis", "cover_url", "release_date", "release_year",
+    "number", "series", "title", "synopsis", "cover_url", "release_date", "release_year",
     "physical_releases", "tracks", "cast", "credits", "ratings", "sources", "last_checked",
 ]
 
