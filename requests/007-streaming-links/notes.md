@@ -20,7 +20,9 @@ The playlist and universal links establish useful starting points, but they do n
 
 ## Automated checks
 
-Not yet run in a local environment. Awaiting GitHub Actions results.
+Not run locally because this environment has no GitHub network access. GitHub Actions results are pending.\n
+- First PR CI run: frontend checks passed (npm install, audit, typecheck, tests, build). Python suite identified that the listening-link fixture places the link inside the detail panel; parser was adjusted to inspect links inside the panel and then adjacent siblings. A fresh run on the updated head is pending.
+
 
 ## Questions for the research phase
 
