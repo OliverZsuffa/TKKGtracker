@@ -3,7 +3,7 @@
 Store concise, reusable facts that help with multiple requests.
 
 ## Topics
-Knowledge topics will be linked here when implementation establishes durable patterns or lessons.
+- [Catalogue source findings](catalogue-sources.md) — verified source coverage, extraction fields, and known catalogue inconsistencies.
 
 ## What belongs here?
 - Architecture and how important components fit together.
