@@ -1,0 +1,70 @@
+from __future__ import annotations
+
+import unittest
+
+from scraper.merge import merge_records
+from scraper.validate import find_number_gaps, validate_catalogue
+
+
+def episode(number: int, title: str, **extra) -> dict:
+    value = {
+        "number": number,
+        "title": title,
+        "series": "TKKG",
+        "synopsis": None,
+        "cover_url": None,
+        "release_date": None,
+        "release_year": None,
+        "physical_releases": [],
+        "tracks": [],
+        "cast": [],
+        "credits": [],
+        "ratings": [],
+        "sources": [{"name": "test", "url": "https://example.com/episode", "retrieved_at": "2026-10-18T00:00:00+00:00"}],
+        "last_checked": "2026-10-18T00:00:00+00:00",
+    }
+    value.update(extra)
+    return value
+
+
+class CatalogueTests(unittest.TestCase):
+    def test_valid_episode_passes_schema(self):
+        self.assertEqual(validate_catalogue([episode(1, "Test Folge")]), [])
+
+    def test_duplicate_numbers_are_rejected(self):
+        errors = validate_catalogue([episode(1, "A"), episode(1, "B")])
+        self.assertTrue(any("duplicate episode number 1" in error for error in errors))
+
+    def test_missing_title_is_rejected(self):
+        errors = validate_catalogue([episode(1, "")])
+        self.assertTrue(errors)
+
+    def test_gaps_are_reported(self):
+        self.assertEqual(find_number_gaps([episode(1, "A"), episode(3, "C")]), [2])
+
+    def test_missing_first_episode_is_reported(self):
+        self.assertEqual(find_number_gaps([episode(2, "B"), episode(3, "C")]), [1])
+
+    def test_merge_preserves_metadata_and_sources(self):
+        base = episode(1, "A")
+        enrichment = episode(
+            1,
+            "A",
+            synopsis="A description",
+            cast=[{"name": "Actor", "character": "Role"}],
+            sources=[{"name": "second source", "url": "https://example.org/episode", "retrieved_at": "2026-10-18T00:00:00+00:00"}],
+        )
+        merged, conflicts = merge_records([base, enrichment])
+        self.assertEqual(conflicts, [])
+        self.assertEqual(merged[0]["synopsis"], "A description")
+        self.assertEqual(len(merged[0]["cast"]), 1)
+        self.assertEqual(len(merged[0]["sources"]), 2)
+
+    def test_title_conflicts_are_reported(self):
+        merged, conflicts = merge_records([episode(1, "A"), episode(1, "Different")])
+        self.assertEqual(merged[0]["title"], "A")
+        self.assertEqual(len(conflicts), 1)
+
+
+if __name__ == "__main__":
+    unittest.main()

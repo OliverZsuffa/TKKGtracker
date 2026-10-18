@@ -1,0 +1,4 @@
+{
+  "success": false,
+  "message": "Catalogue has not been generated yet. Run python -m scraper.run in an environment with network access."
+}
