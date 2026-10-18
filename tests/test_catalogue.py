@@ -32,6 +32,17 @@ class CatalogueTests(unittest.TestCase):
     def test_valid_episode_passes_schema(self):
         self.assertEqual(validate_catalogue([episode(1, "Test Folge")]), [])
 
+    def test_invalid_listening_destination_is_rejected(self):
+        malformed = episode(1, "Test Folge", listening_links=[{
+            "service": "official",
+            "label": "Official listening page",
+            "url": "https://example.com/episode",
+            "link_type": "official_hub",
+            "source_url": "https://www.tkkg.de/produkte/hoerspiele",
+        }])
+        errors = validate_catalogue([malformed])
+        self.assertTrue(any("does not match" in error for error in errors))
+
     def test_duplicate_numbers_are_rejected(self):
         errors = validate_catalogue([episode(1, "A"), episode(1, "B")])
         self.assertTrue(any("duplicate episode number 1" in error for error in errors))
@@ -84,6 +95,19 @@ class CatalogueTests(unittest.TestCase):
             "source_url": "https://example.com/episode",
         }], release_year=1981)
         self.assertEqual(validate_catalogue([valid]), [])
+
+    def test_merge_preserves_official_listening_links(self):
+        base = episode(1, "A")
+        enrichment = episode(1, "A", listening_links=[{
+            "service": "official",
+            "label": "Official listening page",
+            "url": "https://tkkg.lnk.to/-001AW",
+            "link_type": "official_hub",
+            "source_url": "https://www.tkkg.de/produkte/hoerspiele",
+        }])
+        merged, conflicts = merge_records([base, enrichment])
+        self.assertEqual(conflicts, [])
+        self.assertEqual(merged[0]["listening_links"], enrichment["listening_links"])
 
     def test_title_conflicts_are_reported(self):
         merged, conflicts = merge_records([episode(1, "A"), episode(1, "Different")])
