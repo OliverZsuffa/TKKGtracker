@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from datetime import datetime
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, Tag
@@ -10,15 +11,24 @@ from scraper.http import SourceClient
 
 BASE_URL = "https://www.tkkg.de/produkte/hoerspiele"
 EPISODE_HEADING = re.compile(r"TKKG\s+Hörspiel-Folge\s+(\d+)", re.IGNORECASE)
-HEADING_TAGS = {"h5", "h6"}
+HEADING_TAGS = {"h3", "h4", "h5", "h6"}
+
+# The listing omits these three main-series episodes, although their official
+# product detail pages remain publicly available. Keep these verified fallbacks
+# explicit rather than synthesizing slugs or relaxing catalogue completeness.
+SUPPLEMENTAL_DETAIL_URLS = {
+    222: "https://www.tkkg.de/produkte/details/roter-drache-222",
+    223: "https://www.tkkg.de/produkte/details/betruger-super-sauber",
+    234: "https://www.tkkg.de/produkte/details/im-auftrag-des-bosen",
+}
 
 
 def _clean(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def _section_lines(panel: Tag, label: str) -> list[str]:
-    headings = panel.find_all(["h5", "h6"])
+def _section_lines(panel: Tag | BeautifulSoup, label: str) -> list[str]:
+    headings = panel.find_all(list(HEADING_TAGS))
     target = next((h for h in headings if _clean(h.get_text(" ", strip=True)).casefold() == label.casefold()), None)
     if target is None:
         return []
@@ -34,7 +44,7 @@ def _section_lines(panel: Tag, label: str) -> list[str]:
     return lines
 
 
-def _section(panel: Tag, label: str) -> str | None:
+def _section(panel: Tag | BeautifulSoup, label: str) -> str | None:
     result = _clean(" ".join(_section_lines(panel, label)))
     return result or None
 
@@ -65,6 +75,42 @@ def _find_product_teaser(panel: Tag) -> Tag | None:
     if trigger is None or teaser.find("img") is None or teaser.find(["h2", "h3"]) is None:
         return None
     return teaser
+
+
+def _base_record(number: int, title: str, url: str, synopsis: str | None, cover_url: str | None,
+                 release_date: str | None, release_year: int | None, cast: list[dict], credits: list[dict]) -> dict:
+    return {
+        "number": number,
+        "title": title,
+        "synopsis": synopsis,
+        "cover_url": cover_url,
+        "release_date": release_date,
+        "release_year": release_year,
+        "physical_releases": [],
+        "tracks": [],
+        "cast": cast,
+        "credits": credits,
+        "ratings": [],
+        "sources": [{"name": "Official TKKG catalogue", "url": url}],
+    }
+
+
+def _parse_cast(panel: Tag | BeautifulSoup) -> list[dict]:
+    cast = []
+    for line in _section_lines(panel, "Sprecher"):
+        if " - " in line:
+            character, name = line.split(" - ", 1)
+            cast.append({"name": _clean(name), "character": _clean(character)})
+    return cast
+
+
+def _parse_credits(panel: Tag | BeautifulSoup) -> list[dict]:
+    credits = []
+    for line in _section_lines(panel, "Details"):
+        if ":" in line:
+            role, name = line.split(":", 1)
+            credits.append({"role": _clean(role), "name": _clean(name)})
+    return credits
 
 
 def parse_official_page(client: SourceClient, page_number: int, diagnostics: list[dict] | None = None) -> list[dict]:
@@ -119,7 +165,8 @@ def parse_official_page(client: SourceClient, page_number: int, diagnostics: lis
         if not title:
             title_match = re.search(r"Folge\s+\d+\s*:\s*(.+)$", alt, re.IGNORECASE)
             title = _clean(title_match.group(1)) if title_match else ""
-        if not title or any(term in title.casefold() for term in ("live-album", "live album", "hörspiel-box", "krimi-box", "hörspiel zum kinofilm")):
+        excluded_terms = ("live-album", "live album", "hörspiel-box", "krimi-box", "hörspiel zum kinofilm")
+        if not title or any(term in title.casefold() for term in excluded_terms):
             if diagnostics is not None:
                 diagnostics.append({
                     "number": number,
@@ -136,33 +183,70 @@ def parse_official_page(client: SourceClient, page_number: int, diagnostics: lis
             if image_src:
                 image_url = urljoin(url, image_src)
 
-        synopsis = _section(panel, "Inhalt")
-        cast = []
-        for line in _section_lines(panel, "Sprecher"):
-            if " - " in line:
-                character, name = line.split(" - ", 1)
-                cast.append({"name": _clean(name), "character": _clean(character)})
-        credits = []
-        for line in _section_lines(panel, "Details"):
-            if ":" in line:
-                role, name = line.split(":", 1)
-                credits.append({"role": _clean(role), "name": _clean(name)})
-
-        records.append({
-            "number": number,
-            "title": title,
-            "synopsis": synopsis,
-            "cover_url": image_url,
-            "release_date": None,
-            "release_year": None,
-            "physical_releases": [],
-            "tracks": [],
-            "cast": cast,
-            "credits": credits,
-            "ratings": [],
-            "sources": [{"name": "Official TKKG catalogue", "url": url}],
-        })
+        records.append(_base_record(
+            number=number,
+            title=title,
+            url=url,
+            synopsis=_section(panel, "Inhalt"),
+            cover_url=image_url,
+            release_date=None,
+            release_year=None,
+            cast=_parse_cast(panel),
+            credits=_parse_credits(panel),
+        ))
     return records
+
+
+def parse_official_detail_page(client: SourceClient, number: int, url: str) -> dict:
+    """Parse a verified official product page used when the listing omits an episode."""
+    soup = client.get_html(url)
+    heading = next(
+        (h for h in soup.find_all(["h2", "h3", "h4", "h5", "h6"])
+         if EPISODE_HEADING.search(_clean(h.get_text(" ", strip=True)))),
+        None,
+    )
+    match = EPISODE_HEADING.search(_clean(heading.get_text(" ", strip=True))) if heading else None
+    if match is None or int(match.group(1)) != number:
+        found = int(match.group(1)) if match else None
+        raise ValueError(f"Expected official episode {number} at {url}, found {found}.")
+
+    title_heading = soup.find("h1")
+    title = _clean(title_heading.get_text(" ", strip=True)) if title_heading else ""
+    if not title:
+        raise ValueError(f"Official detail page has no title for episode {number}: {url}")
+
+    image = next(
+        (img for img in soup.find_all("img", alt=True)
+         if (image_match := EPISODE_HEADING.search(_clean(img.get("alt", ""))))
+         and int(image_match.group(1)) == number),
+        None,
+    )
+    image_url = None
+    if image:
+        image_src = image.get("src") or image.get("data-src") or image.get("data-lazy-src")
+        if image_src:
+            image_url = urljoin(url, image_src)
+
+    body_text = soup.get_text(" ", strip=True)
+    date_match = re.search(r"Veröffentlich(?:ungs|keits)datum:\s*(\d{2}\.\d{2}\.\d{4})", body_text, re.IGNORECASE)
+    release_date = None
+    release_year = None
+    if date_match:
+        parsed_date = datetime.strptime(date_match.group(1), "%d.%m.%Y").date()
+        release_date = parsed_date.isoformat()
+        release_year = parsed_date.year
+
+    return _base_record(
+        number=number,
+        title=title,
+        url=url,
+        synopsis=_section(soup, "Inhalt"),
+        cover_url=image_url,
+        release_date=release_date,
+        release_year=release_year,
+        cast=_parse_cast(soup),
+        credits=_parse_credits(soup),
+    )
 
 
 def discover_official_episodes(client: SourceClient, max_pages: int = 30, diagnostics: list[dict] | None = None) -> list[dict]:
@@ -177,5 +261,14 @@ def discover_official_episodes(client: SourceClient, max_pages: int = 30, diagno
             continue
         empty_pages = 0
         for record in page_records:
+            records[(record["number"], record["title"])] = record
+
+    # A few regular episodes are absent from the listing grid but have verified
+    # first-party product pages. Fetch these only when the listing has no record
+    # for that episode; keep the completeness guard active if a fallback fails.
+    existing_numbers = {record["number"] for record in records.values()}
+    for number, url in SUPPLEMENTAL_DETAIL_URLS.items():
+        if number not in existing_numbers:
+            record = parse_official_detail_page(client, number, url)
             records[(record["number"], record["title"])] = record
     return list(records.values())
