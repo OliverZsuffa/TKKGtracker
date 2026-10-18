@@ -1,6 +1,6 @@
 # Implementation plan: UI redesign, advanced search, and missing-data reports
 
-**Status:** Approved by Oliver; implementation in progress on PR #6. See notes.md for verified outcomes and remaining checks.
+**Status:** Implemented on PR #6; automated CI passed. Manual browser review and merge/deployment remain separate follow-up decisions. See notes.md for verified outcomes.
 
 ## 1. Repository findings
 
