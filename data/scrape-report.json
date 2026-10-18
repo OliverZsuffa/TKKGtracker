@@ -1,5 +1,5 @@
 {
-  "started_at": "2026-10-18T10:08:20.949556+00:00",
+  "started_at": "2026-10-18T10:13:28.016912+00:00",
   "sources": {
     "archive_index_entries": 217,
     "archive_index_max_number": 217,
@@ -161,5 +161,5 @@
   "episode_count": 243,
   "validation_errors": [],
   "success": true,
-  "finished_at": "2026-10-18T10:10:36.267549+00:00"
+  "finished_at": "2026-10-18T10:15:26.181126+00:00"
 }
