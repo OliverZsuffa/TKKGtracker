@@ -101,7 +101,12 @@ def _image_candidates(soup: BeautifulSoup, episode_number: int, page_url: str) -
         raw = raw.strip().split()[0]
         if not raw or raw.startswith("data:"):
             return
-        absolute = urljoin(page_url, raw)
+        # The archive often emits uploads/pics/... without a leading slash.
+        # Treat that path as site-root relative, not relative to the episode page.
+        if raw.lstrip("/").startswith("uploads/pics/"):
+            absolute = urljoin(ARCHIVE_ORIGIN + "/", raw.lstrip("/"))
+        else:
+            absolute = urljoin(page_url, raw)
         parsed = urlsplit(absolute)
         if parsed.scheme not in {"http", "https"} or parsed.netloc not in {"www.tkkg-site.de", "tkkg-site.de"}:
             return
