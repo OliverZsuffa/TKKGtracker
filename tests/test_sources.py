@@ -24,9 +24,10 @@ class FakeClient:
         return BeautifulSoup(self.pages[url], "html.parser")
 
 
-def official_product(number: int, title: str, synopsis: str, image_number: int | None = None) -> str:
+def official_product(number: int, title: str, synopsis: str, image_number: int | None = None, listening_url: str | None = None) -> str:
     image_number = number if image_number is None else image_number
     panel_id = f"detail{number}"
+    listening_anchor = f'<a href="{listening_url}">Jetzt anhören</a>' if listening_url else ""
     return f'''
       <div class="row mb-10">
         <div class="col-12 col-md-6 col-lg-4 mb-16">
@@ -45,6 +46,7 @@ def official_product(number: int, title: str, synopsis: str, image_number: int |
               <h5>Details</h5><p>Produktion und Regie: Heikedine Körting<br>Redaktion: Petra Delmar</p>
             </div>
           </div>
+          {listening_anchor}
         </div>
       </div>
     '''
@@ -230,12 +232,7 @@ class SourceParserTests(unittest.TestCase):
 
     def test_official_page_extracts_details_from_linked_teaser_and_collapse_panel(self):
         url = "https://www.tkkg.de/produkte/hoerspiele"
-        html = official_product(243, "Die Fährte des Hehlers", "Ein Fall mit einem Hehler.")
-        html = html.replace(
-            "      </div>\n    ",
-            '      <a href="https://tkkg.lnk.to/-243AW">Jetzt anhören</a>\n      </div>\n    ',
-            1,
-        )
+        html = official_product(243, "Die Fährte des Hehlers", "Ein Fall mit einem Hehler.", listening_url="https://tkkg.lnk.to/-243AW")
         client = FakeClient({url: html})
         records = parse_official_page(client, 0)
         self.assertEqual(len(records), 1)
