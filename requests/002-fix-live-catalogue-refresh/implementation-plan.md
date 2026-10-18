@@ -1,0 +1,139 @@
+# Implementation plan: Diagnose and fix live TKKG catalogue fetching
+
+**Status:** Approved 18 October 2026; implementation and live verification in progress
+
+## Goal
+
+Make the live catalogue refresh reliably retrieve real episode records instead of failing on archive pages or treating unrelated official catalogue content as episodes. Investigate how both sites actually deliver their content before choosing a fix.
+
+The two sources have different roles and must be diagnosed independently:
+
+1. `tkkg-site.de` provides individual historical detail pages for episodes 1 to 206. The user can open these pages manually, but the scraper currently reports that most detail pages cannot be fetched.
+2. `tkkg.de/produkte/hoerspiele` loads product details dynamically. Opening a product's arrow or details control displays the title and additional information. The scraper must identify where that information comes from rather than assuming it is present in the initial HTML.
+
+Do not loosen completeness checks, fabricate metadata, or publish a partial catalogue to make the workflow pass.
+
+## 1. Establish a reproducible baseline
+
+- Inspect the failed refresh log and `scrape-report.json` from the referenced Actions run.
+- Record the exact discovered URL, HTTP status, redirect destination, content type, and a short sanitized response excerpt for representative failures.
+- Test at least one early archive episode, one middle episode, and episode 206. Use URLs discovered from the real index rather than guessed paths.
+- Test the official catalogue's initial listing page, a later paginated page, and the details interaction for a representative product.
+- Separate an HTTP fetch failure from a parsing failure. A successful HTTP response with no extracted record is not the same as a 404 or access denial.
+- Check each site's `robots.txt` and relevant access terms before running live requests. If access permission cannot be established, document the limitation and stop requests to that source.
+
+## 2. Fix retrieval of historical detail pages on tkkg-site.de
+
+### 2.1 Follow the actual index links
+
+- Inspect the href values in the historical series index at `https://www.tkkg-site.de/de/hoeren/hoerspiele/serie.html`.
+- Use the index's actual episode detail links as the source of truth. Resolve relative URLs against the index page URL with a standard URL resolver.
+- Handle absolute URLs, root-relative paths, and paths relative to the current directory without duplicating `/de/hoeren/hoerspiele/`.
+- Validate that generated links stay on the expected `www.tkkg-site.de` host for episodes 1 to 206. Do not rewrite links on `audio.tkkg-site.de` into archive URLs.
+- Inspect the final URL after redirects and confirm that it is the intended episode page, not a listing page, error page, or access challenge.
+
+### 2.2 Identify why requests fail when pages work in a browser
+
+For representative URLs, compare the scraper response with the page a normal browser displays.
+
+- Check status codes, redirect chains, response headers, content type, response length, and whether the body is the expected episode page.
+- Distinguish malformed URLs, transient server errors, robots restrictions, access denials, bot challenges, and changed page markup. Do not label all of these as 404 or parsing failures.
+- If the URL is correct but the response differs, inspect whether ordinary browser headers or cookies are genuinely required. Use a normal, non evasive request configuration only if permitted by the site's terms. Do not bypass access controls, CAPTCHAs, or anti bot restrictions.
+- If the HTTP response contains the page but extraction fails, inspect the actual markup and update the selectors based on saved HTML fixtures.
+- Keep request pacing conservative and avoid adding browser automation unless evidence shows the required public content cannot be retrieved from the permitted HTML response.
+
+### 2.3 Regression tests
+
+Add fixtures and tests for:
+- The real index href forms used by early, middle, and episode 206 entries.
+- The previously observed duplicated path.
+- Correct host preservation for archive pages and linked newer episode posts.
+- A successful detail page response, a genuine not found response, an access denied response, a redirect, and an unexpected HTML page.
+- Extracting title and available detail metadata from the actual page structure, including absent optional fields.
+
+## 3. Investigate dynamic product details on tkkg.de
+
+### 3.1 Discover how the details popup is populated
+
+- Inspect the initial HTML of `https://www.tkkg.de/produkte/hoerspiele` and its paginated variants.
+- Inspect the product detail control and the markup or JavaScript that handles its click event.
+- Identify whether the title, synopsis, cover, speakers, credits, and other fields are already embedded in HTML or structured data, loaded from a public JSON endpoint, fetched through an XHR/fetch request, or generated by another public site mechanism.
+- Use browser developer tools or a browser inspection session to observe the request made when opening a product. Record the request URL, method, required non sensitive parameters, response type, and which fields it contains.
+- Check whether the same information is available through structured data, a public feed, or a documented public endpoint before implementing a more complex approach.
+- Check access terms and robots rules for any discovered endpoint before using it. Do not guess undocumented endpoint paths or bypass site restrictions.
+
+### 3.2 Implement the simplest permitted reliable source adapter
+
+Choose the extraction strategy only after the investigation:
+- Prefer a permitted public structured endpoint when it returns the same product details displayed by the site.
+- Otherwise parse the server delivered HTML or structured metadata if it contains the required fields.
+- Use browser automation only if the content is genuinely rendered client side, no simpler permitted public source exists, and browser based access is allowed. Document the runtime and maintenance cost before adopting it.
+- Keep product discovery and detail extraction separate so failures can be reported at the correct stage.
+- Follow pagination and discover the available products rather than hard coding a presumed maximum episode number.
+- Exclude live albums, box sets, and unrelated products only using rules supported by observed source fields and regression fixtures.
+
+### 3.3 Diagnose the episode 500 false positive
+
+- Trace the exact source URL, product title, surrounding markup, and extraction rule that produced number 500.
+- Determine whether it is a genuine regular main series episode, a special product, a product identifier misread as an episode number, or unrelated page content.
+- Implement a filtering rule only when the source evidence supports it, and add a regression fixture.
+- Report rejected suspicious records with their source URL, title, and reason. Do not use the maximum number alone as evidence that an episode exists.
+
+## 4. Merge sources and report coverage accurately
+
+- Keep the archive detail pages as the preferred historical title and metadata source for episodes 1 to 206 when the source provides the field.
+- Use the official catalogue to discover current and later releases, while preserving source provenance and exposing conflicting values.
+- Treat linked `audio.tkkg-site.de` posts for episodes 207 to 217 as an optional source only when robots.txt access can be verified. The runtime returned HTTP 403, so the scraper now fails closed and uses official catalogue metadata for these numbers.
+- Report counts for index links discovered, detail pages requested, successful responses, parse successes, access failures, HTTP failures, and records accepted.
+- For every failed or rejected record, include its episode number when known, source URL, stage, status or error category, and a concise explanation.
+- Report gaps, duplicate numbers, title conflicts, suspicious records, and optional metadata coverage separately.
+- Keep the existing incomplete catalogue guard. A failed or suspicious refresh must not overwrite the last valid dataset.
+- Ensure the report artifact is uploaded even when the scrape fails.
+
+## 5. Maintain GitHub Actions only after the source fix is understood
+
+- Check maintained versions and runtime compatibility for checkout, setup-python, setup-node, upload-artifact, upload-pages-artifact, and deploy-pages.
+- Update action versions together where supported, preserve least privilege permissions, and verify the workflow syntax.
+- Decide deliberately whether to pin a supported Ubuntu runner or test the announced runner migration. Do not change the runner merely to silence a warning.
+- Preserve the ordering rule that deployment can run only after a successful catalogue refresh and validation.
+- Keep these maintenance changes separate from scraper behaviour where practical, so failures are attributable.
+
+## 6. Verification and acceptance
+
+### Automated checks
+
+- Add and run focused URL resolution and archive parsing tests.
+- Add and run official catalogue extraction tests, including a fixture for the episode 500 false positive and the discovered dynamic detail mechanism.
+- Test failure classification for 404, access denial, unexpected content, parse failure, and source outage.
+- Run all Python tests, frontend tests, type checking, dependency audit, and production build.
+- Confirm validation failures cannot replace the previous valid JSON and CSV files.
+
+### Live refresh
+
+- Run a manual catalogue refresh only after local checks pass and source access has been verified.
+- Inspect the full report and compare representative extracted records against the pages a user can open.
+- Verify the historical archive detail pages for episodes 1, a middle episode, and 206 are successfully fetched and parsed, or record a precise evidence based access limitation.
+- Verify official catalogue pagination and dynamic detail extraction, and explain the episode 500 result using source evidence.
+- Confirm accepted records have unique episode numbers, nonempty titles, and source provenance. Investigate gaps and conflicts rather than assuming they are errors or ignoring them.
+- Confirm JSON and CSV are updated only after validation succeeds.
+
+### Deployment and manual browser checks
+
+- Verify the Pages deployment uses the newly validated catalogue.
+- Open the deployed app and confirm the episode list is populated, search works by title and number, and listening progress persists after reload.
+- Record actual observations in `testing.md` and implementation outcomes in `notes.md`. Update reusable knowledge only with durable findings that were actually verified.
+
+## Verified outcome
+
+- Archive URL resolution is fixed and the live run fetched all 206 historical detail pages for episodes 1–206.
+- The official listing's collapsed detail panels are embedded in the initial HTML and linked to teaser siblings with data-modal IDs; no browser automation or guessed XHR endpoint was needed.
+- Official product pages verified for episodes 222, 223, and 234 are used as explicit fallbacks because the listing omits them.
+- The official listing's episode 500 is a film tie-in, and other special products that reuse episode numbers are excluded by evidence-based, tested rules.
+- Source HTML is parsed from response bytes to preserve correct character encoding. The CSV export includes the required series field.
+- The live diagnostic succeeded with 243 records, no numbering gaps, and no schema errors. The audio subdomain returns HTTP 403 for robots.txt, so its posts are not fetched; official catalogue metadata covers episodes 207–217.
+- CI passed Python tests, frontend tests, type checking, high-severity dependency audit, and production build.
+- The branch-only live diagnostic uploads data as an artifact and does not commit or deploy it. Production deployment and browser smoke testing remain pending merge.
+
+## Approval
+
+Oliver approved this revised plan on 18 October 2026. Implementation and live validation are complete on the dedicated Request 002 branch. The incomplete-catalogue guard remains enabled.

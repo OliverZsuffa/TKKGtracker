@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit, urlunsplit
 
 from bs4 import BeautifulSoup, Tag
 
@@ -9,12 +9,29 @@ from scraper.http import SourceClient
 
 
 INDEX_URL = "https://www.tkkg-site.de/de/hoeren/hoerspiele/serie.html"
+ARCHIVE_PREFIX = "/de/hoeren/hoerspiele/"
+ARCHIVE_ORIGIN = "https://www.tkkg-site.de"
 EPISODE_LINK = re.compile(r"Folge\s*0*(\d{1,3})\s*:?\s*(.+)", re.IGNORECASE)
 HEADING_TAGS = {"h2", "h3", "h4", "h5"}
 
 
 def _clean(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
+
+
+def _resolve_index_link(href: str) -> str:
+    """Resolve the archive's mixed absolute, root-relative, and directory-relative hrefs."""
+    resolved = urljoin(INDEX_URL, href.strip())
+    parsed = urlsplit(resolved)
+    path = parsed.path
+
+    # Some archive links omit the leading slash, so urljoin treats the site-root
+    # path as relative to /de/hoeren/hoerspiele/ and duplicates that directory.
+    doubled_prefix = ARCHIVE_PREFIX + ARCHIVE_PREFIX.lstrip("/")
+    if path.startswith(doubled_prefix):
+        path = ARCHIVE_PREFIX + path[len(doubled_prefix):]
+
+    return urlunsplit((parsed.scheme, parsed.netloc, path, parsed.query, parsed.fragment))
 
 
 def discover_archive_episodes(client: SourceClient) -> list[dict]:
@@ -29,7 +46,7 @@ def discover_archive_episodes(client: SourceClient) -> list[dict]:
         title = _clean(match.group(2)).lstrip(":").strip()
         if not title or number < 1:
             continue
-        url = urljoin(INDEX_URL, link["href"])
+        url = _resolve_index_link(link["href"])
         if number not in records or (":" in label and "folge-" in url.lower()):
             records[number] = {
                 "number": number,

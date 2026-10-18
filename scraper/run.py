@@ -9,7 +9,7 @@ from scraper.export import write_catalogue
 from scraper.http import SourceAccessError, SourceClient
 from scraper.merge import merge_records
 from scraper.sources.archive import discover_archive_episodes, parse_archive_episode
-from scraper.sources.official import discover_official_episodes
+from scraper.sources.official import SUPPLEMENTAL_DETAIL_URLS, discover_official_episodes
 from scraper.sources.tumblr import parse_tumblr_episode
 from scraper.validate import find_number_gaps, validate_catalogue
 
@@ -45,14 +45,42 @@ def main() -> int:
                 elif entry["number"] >= 207 and "audio.tkkg-site.de" in entry["source_url"]:
                     archive_records.append(parse_tumblr_episode(client, entry))
             except SourceAccessError as exc:
-                report["warnings"].append(str(exc))
+                source_url = entry.get("source_url", "")
+                if "audio.tkkg-site.de" in source_url:
+                    if not any(isinstance(warning, dict) and warning.get("source") == "audio.tkkg-site.de" for warning in report["warnings"]):
+                        audio_numbers = [
+                            item["number"] for item in archive_entries
+                            if "audio.tkkg-site.de" in item.get("source_url", "")
+                        ]
+                        report["warnings"].append({
+                            "source": "audio.tkkg-site.de",
+                            "numbers": audio_numbers,
+                            "stage": "robots" if "robots.txt" in str(exc) else "fetch",
+                            "error": str(exc),
+                            "note": "These episodes are covered by the official catalogue. Access controls were not bypassed.",
+                        })
+                else:
+                    report["warnings"].append({
+                        "source": "archive",
+                        "number": entry.get("number"),
+                        "title": entry.get("title"),
+                        "source_url": source_url,
+                        "stage": "fetch",
+                        "error": str(exc),
+                    })
 
-        official_records = discover_official_episodes(client)
+        official_diagnostics: list[dict] = []
+        official_records = discover_official_episodes(client, diagnostics=official_diagnostics)
         report["sources"]["official_records"] = len(official_records)
+        report["sources"]["official_detail_fallback_records"] = sum(
+            1 for item in official_records
+            if any(source.get("url") in SUPPLEMENTAL_DETAIL_URLS.values() for source in item.get("sources", []))
+        )
         report["sources"]["official_max_number"] = max((item["number"] for item in official_records), default=0)
+        report["sources"]["official_rejected_records"] = official_diagnostics
+        report["sources"]["official_rejected_count"] = len(official_diagnostics)
         report["sources"]["archive_detail_records"] = len(archive_records)
 
-        # Archive records are the preferred title source for episodes it explicitly indexes.
         archive_records.sort(key=lambda item: item["number"])
         official_records.sort(key=lambda item: item["number"])
         combined = archive_records + official_records
@@ -61,8 +89,6 @@ def main() -> int:
         report["gaps"] = find_number_gaps(episodes)
         report["episode_count"] = len(episodes)
 
-        # The archive currently indexes through episode 217. Require the official source to
-        # contribute a newer episode, but do not hard-code the current maximum episode number.
         archive_max = report["sources"]["archive_index_max_number"]
         official_max = report["sources"]["official_max_number"]
         if archive_max < HISTORICAL_INDEX_LATEST:
@@ -74,7 +100,6 @@ def main() -> int:
         if report["gaps"]:
             raise RuntimeError(f"Unexplained numbering gaps detected: {report['gaps']}. Refusing to publish an incomplete catalogue.")
 
-        # Provenance timestamps are part of the schema, so add them before validation.
         for episode in episodes:
             episode["last_checked"] = now
             for source in episode["sources"]:

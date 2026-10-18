@@ -1,0 +1,42 @@
+name: Request 002 live catalogue diagnostic
+
+on:
+  push:
+    branches:
+      - request/002-fix-live-catalogue-refresh
+    paths:
+      - "scraper/**"
+      - "tests/**"
+      - ".github/workflows/request-002-live-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  live-diagnostic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Run automated tests
+        run: python -m unittest discover -s tests -v
+      - name: Run live catalogue diagnostic
+        run: python -m scraper.run
+      - name: Upload diagnostic report and generated data
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: request-002-live-diagnostic
+          path: |
+            data/scrape-report.json
+            data/episodes.json
+            data/episodes.csv
+          if-no-files-found: warn
+          retention-days: 14

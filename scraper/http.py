@@ -21,24 +21,31 @@ class SourceClient:
         self.session.headers.update({"User-Agent": USER_AGENT})
         self.delay_seconds = delay_seconds
         self._robots: dict[str, RobotFileParser | None] = {}
-        self._cache: dict[str, str] = {}
+        self._robots_errors: dict[str, str] = {}
+        self._cache: dict[str, bytes] = {}
         self._last_request = 0.0
 
     def _robots_for(self, url: str) -> RobotFileParser | None:
         parsed = urlparse(url)
         origin = f"{parsed.scheme}://{parsed.netloc}"
+        if origin in self._robots_errors:
+            raise SourceAccessError(self._robots_errors[origin])
         if origin in self._robots:
             return self._robots[origin]
         robots_url = f"{origin}/robots.txt"
         try:
             response = self.session.get(robots_url, timeout=20)
         except requests.RequestException as exc:
-            raise SourceAccessError(f"Could not check robots.txt for {origin}: {exc}") from exc
+            message = f"Could not check robots.txt for {origin}: {exc}"
+            self._robots_errors[origin] = message
+            raise SourceAccessError(message) from exc
         if response.status_code == 404:
             self._robots[origin] = None
             return None
         if response.status_code != 200:
-            raise SourceAccessError(f"Could not verify robots.txt for {origin}: HTTP {response.status_code}")
+            message = f"Could not verify robots.txt for {origin}: HTTP {response.status_code}"
+            self._robots_errors[origin] = message
+            raise SourceAccessError(message)
         parser = RobotFileParser()
         parser.set_url(robots_url)
         parser.parse(response.text.splitlines())
@@ -62,5 +69,5 @@ class SourceClient:
             raise SourceAccessError(f"Could not fetch {url}: {exc}") from exc
         if "text/html" not in response.headers.get("Content-Type", "").lower():
             raise SourceAccessError(f"Expected HTML at {url}, got {response.headers.get('Content-Type', 'unknown')}")
-        self._cache[url] = response.text
-        return BeautifulSoup(response.text, "html.parser")
+        self._cache[url] = response.content
+        return BeautifulSoup(response.content, "html.parser")
