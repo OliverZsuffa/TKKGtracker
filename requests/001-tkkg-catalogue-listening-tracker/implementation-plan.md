@@ -1,7 +1,6 @@
 # Implementation plan: TKKG catalogue and listening tracker
 
-**Status:** Awaiting approval  
-**Implementation must not begin until Oliver approves this plan.**
+**Status:** Approved following Oliver's approval in chat.
 
 ## 1. Source reconnaissance
 
@@ -124,7 +123,7 @@ Store listening state in browser local storage, keyed by stable episode number. 
 - Preserve the previous valid dataset on failure and expose diagnostics in the workflow run.
 
 ### Build and deployment workflow
-- Run type checking, automated tests, and production build.
+- Run type checking, automated tests, production build.
 - Deploy the static build to GitHub Pages after successful validation.
 - Ensure the deployed app loads the bundled catalogue without a server.
 - Keep workflow permissions limited to the required repository and Pages operations.
@@ -160,4 +159,4 @@ Run the Python tests, frontend tests, type checking, and production build in the
 
 ## 10. Approval gate
 
-Wait for Oliver's explicit approval before writing scraper or application code. If source reconnaissance shows that a source cannot be accessed or a requested metadata category is unavailable, document the evidence and propose the smallest necessary adjustment before proceeding.
+The plan was approved by Oliver in chat. If source reconnaissance shows that a source cannot be accessed or a requested metadata category is unavailable, document the evidence and propose the smallest necessary adjustment before proceeding.
