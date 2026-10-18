@@ -48,7 +48,13 @@ class CatalogueTests(unittest.TestCase):
 
     def test_merge_preserves_metadata_and_sources(self):
         base = episode(1, "A")
-        enrichment = episode(1, "A", synopsis="A description", cast=[{"name": "Actor", "character": "Role"}])
+        enrichment = episode(
+            1,
+            "A",
+            synopsis="A description",
+            cast=[{"name": "Actor", "character": "Role"}],
+            sources=[{"name": "second source", "url": "https://example.org/episode", "retrieved_at": "2026-10-18T00:00:00+00:00"}],
+        )
         merged, conflicts = merge_records([base, enrichment])
         self.assertEqual(conflicts, [])
         self.assertEqual(merged[0]["synopsis"], "A description")
