@@ -1,6 +1,6 @@
 # Implementation notes: Installable Android PWA
 
-**Status:** Implemented on branch `request/008-installable-pwa`; awaiting automated CI and deployed/manual verification.
+**Status:** Implemented and merged via PR #10; the first-load offline cache improvement was merged via PR #11. GitHub Actions checks passed and the GitHub Pages deployment succeeded. Android manual verification remains outstanding.
 
 ## Baseline and investigation
 
@@ -22,11 +22,13 @@
 
 - Inspected current app, storage, Vite base path, and workflow definitions.
 - Added catalogue unit tests, but did not run them locally: the execution environment could not resolve `github.com` to clone the repository or install dependencies.
-- GitHub Actions checks and live deployment have not yet been verified at the time of writing.
+- GitHub Actions passed on commit `15942ab92936d1d51db3bd96499f166bf9d37e26` (frontend and Python jobs). The follow-up service-worker change also passed frontend and Python CI on `c88feb34d11b00e8264ea2bfbbfc567a164e0d84`.
+- Production deployment succeeded for commit `1c409374dbb33bfef688341e1b6049cdf570ee9b`; see [deployment workflow](https://github.com/OliverZsuffa/TKKGtracker/actions/runs/39129890816).
+- Local tests/build were not run because this environment could not resolve `github.com` to clone the repository or install dependencies.
 
 ## Remaining work
 
-- Confirm GitHub Actions passes and review any CI failures before merging.
+- Automated CI and production deployment are complete; no failures remain from the checked workflows.
 - On Android Chrome, verify install prompt, standalone launch, icon, progress persistence, online catalogue refresh, and offline fallback.
 - Confirm the deployed workflow has the runtime `data/episodes.json` file and the weekly refresh path still works.
 - The icon is SVG; browser/version differences should be checked during the manual Android test.
