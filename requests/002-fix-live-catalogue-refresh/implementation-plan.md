@@ -83,7 +83,7 @@ Choose the extraction strategy only after the investigation:
 
 - Keep the archive detail pages as the preferred historical title and metadata source for episodes 1 to 206 when the source provides the field.
 - Use the official catalogue to discover current and later releases, while preserving source provenance and exposing conflicting values.
-- Preserve the separate handling of linked `audio.tkkg-site.de` posts for episodes 207 to 217 unless live investigation shows that the source coverage has changed.
+- Treat linked `audio.tkkg-site.de` posts for episodes 207 to 217 as an optional source only when robots.txt access can be verified. The runtime returned HTTP 403, so the scraper now fails closed and uses official catalogue metadata for these numbers.
 - Report counts for index links discovered, detail pages requested, successful responses, parse successes, access failures, HTTP failures, and records accepted.
 - For every failed or rejected record, include its episode number when known, source URL, stage, status or error category, and a concise explanation.
 - Report gaps, duplicate numbers, title conflicts, suspicious records, and optional metadata coverage separately.
@@ -123,6 +123,17 @@ Choose the extraction strategy only after the investigation:
 - Open the deployed app and confirm the episode list is populated, search works by title and number, and listening progress persists after reload.
 - Record actual observations in `testing.md` and implementation outcomes in `notes.md`. Update reusable knowledge only with durable findings that were actually verified.
 
+## Verified outcome
+
+- Archive URL resolution is fixed and the live run fetched all 206 historical detail pages for episodes 1–206.
+- The official listing's collapsed detail panels are embedded in the initial HTML and linked to teaser siblings with data-modal IDs; no browser automation or guessed XHR endpoint was needed.
+- Official product pages verified for episodes 222, 223, and 234 are used as explicit fallbacks because the listing omits them.
+- The official listing's episode 500 is a film tie-in, and other special products that reuse episode numbers are excluded by evidence-based, tested rules.
+- Source HTML is parsed from response bytes to preserve correct character encoding. The CSV export includes the required series field.
+- The live diagnostic succeeded with 243 records, no numbering gaps, and no schema errors. The audio subdomain returns HTTP 403 for robots.txt, so its posts are not fetched; official catalogue metadata covers episodes 207–217.
+- CI passed Python tests, frontend tests, type checking, high-severity dependency audit, and production build.
+- The branch-only live diagnostic uploads data as an artifact and does not commit or deploy it. Production deployment and browser smoke testing remain pending merge.
+
 ## Approval
 
-Oliver approved this revised plan on 18 October 2026. Implementation is underway on the dedicated Request 002 branch. The incomplete-catalogue guard remains enabled, and the branch-only live diagnostic does not publish or deploy generated data.
+Oliver approved this revised plan on 18 October 2026. Implementation and live validation are complete on the dedicated Request 002 branch. The incomplete-catalogue guard remains enabled.

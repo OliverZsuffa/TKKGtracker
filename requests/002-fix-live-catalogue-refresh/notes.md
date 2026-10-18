@@ -24,9 +24,11 @@
 - The official page sweep found that `?page=0` (the base URL) and `?page=1` return the same latest page; `?page=2` contains episodes 224 to 207 plus a product titled `Jede Legende hat Ihren Anfang (Hörspiel zum Kinofilm)`, labelled as episode 500. That is a film tie-in, not a regular main-series episode. Pages 3 to 8 continue the regular series back to episode 100; later pages have no episode headings. The parser now excludes the film tie-in by its explicit title classification and has a regression test.
 - Added regression tests for archive URL forms, audio subdomain preservation, and the official episode-500 false-positive shapes.
 - Updated GitHub Actions to current Node 24 compatible action releases and pinned Ubuntu 24.04 rather than relying on the moving `ubuntu-latest` label.
-- GitHub Actions run `39113054506` passed both Python and frontend jobs, including unit tests, `npm audit --audit-level=high`, type checking, Vitest, and production build.
-- Initial branch-only live diagnostic `39113096661` confirmed all 217 archive detail records parse successfully, with no archive warnings. It failed only because the first strict official parser version did not yet understand the site's sibling teaser/detail-panel layout. The report artifact is available at https://github.com/OliverZsuffa/TKKGtracker/actions/runs/39113096661/artifacts/12131033424.
-- A second live diagnostic with the corrected panel pairing and film tie-in exclusion is running on the latest code. It uploads its report and generated data as an artifact only; it does not commit or deploy them.
+- GitHub Actions run `39114137635` passed both Python and frontend jobs, including unit tests, `npm audit --audit-level=high`, type checking, Vitest, and production build.
+- The final branch-only live diagnostic succeeded: https://github.com/OliverZsuffa/TKKGtracker/actions/runs/39114134477. Its report and generated JSON/CSV artifact is https://github.com/OliverZsuffa/TKKGtracker/actions/runs/39114134477/artifacts/12131188010.
+- The live report records 217 index entries, 206 successfully fetched historical detail pages, 144 accepted official records including 3 verified detail-page fallbacks, 243 merged episode records, no numbering gaps, and no schema validation errors. The 11 audio-subdomain posts were skipped because robots.txt returned HTTP 403; the official catalogue covers those numbers.
+- The artifact contains 243 JSON records and 243 CSV rows. Spot checks confirmed records 1, 100, and 206 from the archive, plus 207, 217, 222, 223, 234, and 243 from the official source.
+- The live diagnostic generates files in an isolated workflow workspace and uploads them as an artifact. It does not commit generated data or deploy the site. Deployment and browser smoke testing remain pending until the PR is merged.
 
 ## Status
-Implementation is underway. The latest live source result, catalogue completeness, deployment, and browser smoke test are not yet verified.
+Implementation, automated checks, and live catalogue validation are complete. The PR is ready for review. Production deployment and browser smoke testing remain unverified until merge.

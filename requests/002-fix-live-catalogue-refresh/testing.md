@@ -17,7 +17,7 @@
 - Early episode URLs resolve to the archive's episode detail path.
 - Newer episode URLs remain on the intended `audio.tkkg-site.de` host.
 
-**Actual result / Oliver's notes:**
+**Actual result:** Python regression tests pass. The live report shows 217 index entries, 206 fetched historical detail pages, no archive detail fetch warnings, and correct URLs for episodes 1, 100, and 206. Episodes 207–217 were not fetched from audio.tkkg-site.de because robots.txt returned HTTP 403; the official catalogue supplies their episode metadata.
 
 ---
 
@@ -36,7 +36,7 @@
 - The scraper does not treat an unexplained number as proof of coverage.
 - Regular main-series records retain their correct episode numbers and titles.
 
-**Actual result / Oliver's notes:**
+**Actual result:** Tests pass. The official listing's detail content is embedded in collapsed HTML panels linked to their adjacent teaser via data-modal. The listing's episode 500 is the film tie-in “Jede Legende hat Ihren Anfang (Hörspiel zum Kinofilm)” and is excluded. Adventskalender releases, the 209 Neuaufnahme, Die Weihnachtsgeiseln, and the live album are also excluded by source evidence. Verified official detail-page fallbacks supply episodes 222, 223, and 234.
 
 ---
 
@@ -56,7 +56,7 @@
 - The refresh job succeeds with a validated dataset.
 - Failed or incomplete runs do not replace the last valid catalogue.
 
-**Actual result / Oliver's notes:**
+**Actual result:** Live diagnostic run [39114134477](https://github.com/OliverZsuffa/TKKGtracker/actions/runs/39114134477) succeeded. The generated artifact contains 243 JSON records and 243 CSV rows, covers episodes 1–243 with no gaps, and passes schema validation. The audio-subdomain robots limitation is recorded once in the report. The diagnostic run does not commit or deploy generated data; the main update workflow will do so after merge.
 
 ---
 
@@ -77,7 +77,7 @@
 - The site displays the refreshed catalogue and core tracking interactions work.
 - No empty catalogue state or broken asset paths appear.
 
-**Actual result / Oliver's notes:**
+**Actual result:** Not run. The PR has not been merged, so the production Pages deployment and public browser smoke test remain pending.
 
 ---
 

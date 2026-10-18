@@ -1,7 +1,7 @@
 # Request: Fix live catalogue refresh and Actions warnings
 
 ## Status
-Approved 18 October 2026; implementation and live verification in progress
+Implementation and live validation complete 18 October 2026; awaiting review and production deployment
 
 ## Desired outcome
 The scheduled/manual catalogue refresh should discover the regular main-series TKKG episodes from the public sources, validate the result, and only then update the catalogue and trigger deployment. GitHub Actions should use maintained runner/action versions compatible with the current Node.js runtime.
@@ -39,14 +39,14 @@ The first run also emitted maintenance warnings because workflow actions still t
 - Deploying a partial catalogue.
 
 ## Acceptance criteria
-- [ ] Archive episode detail URLs resolve to the intended pages without duplicated path segments.
-- [ ] Tests cover root-relative and site-root-relative archive links.
-- [ ] The official source's episode-500 result is explained and invalid records are excluded by a tested rule.
-- [ ] The scrape report makes source counts, suspicious numbers, gaps, and fatal errors diagnosable.
-- [ ] Python tests, frontend tests, type checking, dependency audit, and production build pass.
-- [ ] A live refresh completes successfully and the generated catalogue passes schema and completeness validation.
-- [ ] The Pages deployment uses the successfully refreshed catalogue and is checked in a browser.
-- [ ] Action/runtime maintenance warnings are resolved where supported, and any remaining runner notice is documented.
+- [x] Archive episode detail URLs resolve to the intended pages without duplicated path segments.
+- [x] Tests cover root-relative and site-root-relative archive links.
+- [x] The official source's episode-500 result is explained and invalid records are excluded by a tested rule.
+- [x] The scrape report makes source counts, suspicious numbers, gaps, and fatal errors diagnosable.
+- [x] Python tests, frontend tests, type checking, dependency audit, and production build pass.
+- [x] A live refresh completes successfully and the generated catalogue passes schema and completeness validation.
+- [ ] The Pages deployment uses the successfully refreshed catalogue and is checked in a browser. (Pending merge.)
+- [x] Action/runtime maintenance warnings are resolved where supported, and any remaining runner notice is documented.
 
 ## Manual testing
 See [testing.md](testing.md).
