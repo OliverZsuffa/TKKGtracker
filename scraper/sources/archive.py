@@ -90,6 +90,57 @@ def _section_list_items(heading: Tag) -> list[str]:
     return items
 
 
+
+def _image_candidates(soup: BeautifulSoup, episode_number: int, page_url: str) -> list[str]:
+    """Collect explicit episode-cover URLs from markup without guessing filenames."""
+    candidates: list[tuple[int, str]] = []
+
+    def add(raw: str | None, score: int) -> None:
+        if not raw:
+            return
+        raw = raw.strip().split()[0]
+        if not raw or raw.startswith("data:"):
+            return
+        absolute = urljoin(page_url, raw)
+        parsed = urlsplit(absolute)
+        if parsed.scheme not in {"http", "https"} or parsed.netloc not in {"www.tkkg-site.de", "tkkg-site.de"}:
+            return
+        path = parsed.path.casefold()
+        filename = path.rsplit("/", 1)[-1]
+        if not re.search(rf"(?<!\d)0*{episode_number}(?!\d)", filename) and not re.search(rf"folge\s*0*{episode_number}(?!\d)", raw, re.I):
+            return
+        if "/uploads/pics/" in path:
+            score += 20
+        if filename.startswith(str(episode_number).zfill(3)):
+            score += 10
+        if any(token in path for token in ("avatar", "logo", "icon", "placeholder")):
+            return
+        candidates.append((score, absolute))
+
+    for image in soup.find_all("img"):
+        alt = str(image.get("alt", ""))
+        image_score = 10 if re.search(rf"folge\s*0*{episode_number}(?!\d)", alt, re.I) else 0
+        for attr in ("src", "data-src", "data-lazy-src", "data-original", "data-image"):
+            add(image.get(attr), image_score)
+        srcset = image.get("srcset") or image.get("data-srcset")
+        if srcset:
+            for candidate in srcset.split(","):
+                add(candidate.strip().split(" ")[0], image_score)
+        parent_link = image.find_parent("a", href=True)
+        if parent_link:
+            add(parent_link.get("href"), image_score)
+
+    for meta in soup.find_all("meta"):
+        if meta.get("property") in {"og:image", "og:image:url"} or meta.get("name") == "twitter:image":
+            add(meta.get("content"), 0)
+
+    unique: dict[str, int] = {}
+    for score, url in candidates:
+        unique[url] = max(score, unique.get(url, -1))
+    return [url for url, _ in sorted(unique.items(), key=lambda item: (-item[1], item[0]))]
+
+
+
 def parse_archive_episode(client: SourceClient, discovered: dict) -> dict:
     soup = client.get_html(discovered["source_url"])
     heading = soup.find(["h1", "h2"])
@@ -112,11 +163,9 @@ def parse_archive_episode(client: SourceClient, discovered: dict) -> dict:
         "sources": [{"name": discovered["source_name"], "url": discovered["source_url"]}],
     }
 
-    image = soup.find("img", alt=re.compile(r"Folge\s*0*" + str(discovered["number"]), re.IGNORECASE))
-    if image:
-        image_src = image.get("src") or image.get("data-src")
-        if image_src:
-            record["cover_url"] = urljoin(discovered["source_url"], image_src)
+    candidates = _image_candidates(soup, discovered["number"], discovered["source_url"])
+    if candidates:
+        record["cover_url"] = candidates[0]
 
     body_text = soup.get_text("\n", strip=True)
     medium = re.search(r"Medium:\s*\n([^\n]+)", body_text, re.IGNORECASE)
