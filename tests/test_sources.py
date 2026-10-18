@@ -94,6 +94,35 @@ class SourceParserTests(unittest.TestCase):
         href = "https://audio.tkkg-site.de/post/175481640949/folge207"
         self.assertEqual(_resolve_index_link(href), href)
 
+    def test_archive_cover_prefers_episode_original_for_001(self):
+        url = "https://www.tkkg-site.de/de/hoeren/hoerspiele/serie/folge-001/inhalt.html"
+        client = FakeClient({url: '''
+          <h1>Folge 001: Die Jagd nach den Millionendieben</h1>
+          <img src="/uploads/pics/001_thumbnail.jpg" alt="Folge 001 thumbnail">
+          <img src="/uploads/pics/001_01.jpg" alt="Cover Folge 001">
+        '''})
+        record = parse_archive_episode(client, {"number": 1, "title": "Die Jagd nach den Millionendieben", "source_url": url, "source_name": "TKKG-Site archive"})
+        self.assertEqual(record["cover_url"], "https://www.tkkg-site.de/uploads/pics/001_01.jpg")
+
+    def test_archive_cover_supports_episode_002_filename_without_suffix(self):
+        url = "https://www.tkkg-site.de/de/hoeren/hoerspiele/serie/folge-002/inhalt.html"
+        client = FakeClient({url: '''
+          <h1>Folge 002: Das Geheimnis der chinesischen Vase</h1>
+          <img src="/uploads/pics/002.jpg" alt="Cover Folge 002">
+        '''})
+        record = parse_archive_episode(client, {"number": 2, "title": "Das Geheimnis der chinesischen Vase", "source_url": url, "source_name": "TKKG-Site archive"})
+        self.assertEqual(record["cover_url"], "https://www.tkkg-site.de/uploads/pics/002.jpg")
+
+    def test_archive_cover_finds_later_episode_in_lazy_loaded_image(self):
+        url = "https://www.tkkg-site.de/de/hoeren/hoerspiele/serie/folge-106/inhalt.html"
+        client = FakeClient({url: '''
+          <h1>Folge 106: Der Mann ohne Kopf</h1>
+          <img src="/uploads/pics/site-logo.jpg" alt="TKKG">
+          <img data-src="/uploads/pics/106_02.jpg" alt="Cover Folge 106">
+        '''})
+        record = parse_archive_episode(client, {"number": 106, "title": "Der Mann ohne Kopf", "source_url": url, "source_name": "TKKG-Site archive"})
+        self.assertEqual(record["cover_url"], "https://www.tkkg-site.de/uploads/pics/106_02.jpg")
+
     def test_archive_detail_extracts_synopsis_tracks_and_release(self):
         url = "https://www.tkkg-site.de/de/hoeren/hoerspiele/serie/folge-001/inhalt.html"
         client = FakeClient({

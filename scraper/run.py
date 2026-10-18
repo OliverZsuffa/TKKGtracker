@@ -10,7 +10,6 @@ from scraper.http import SourceAccessError, SourceClient
 from scraper.merge import merge_records
 from scraper.sources.archive import discover_archive_episodes, parse_archive_episode
 from scraper.sources.official import SUPPLEMENTAL_DETAIL_URLS, discover_official_episodes
-from scraper.sources.tumblr import parse_tumblr_episode
 from scraper.validate import find_number_gaps, validate_catalogue
 
 
@@ -43,7 +42,18 @@ def main() -> int:
                 if entry["number"] <= 206 and "serie/folge-" in entry["source_url"]:
                     archive_records.append(parse_archive_episode(client, entry))
                 elif entry["number"] >= 207 and "audio.tkkg-site.de" in entry["source_url"]:
-                    archive_records.append(parse_tumblr_episode(client, entry))
+                    # Do not fetch or parse these posts: robots.txt on this
+                    # subdomain has previously returned HTTP 403. The official
+                    # catalogue is the permitted source for episodes 207–217.
+                    if not any(isinstance(warning, dict) and warning.get("source") == "audio.tkkg-site.de" for warning in report["warnings"]):
+                        report["warnings"].append({
+                            "source": "audio.tkkg-site.de",
+                            "numbers": [item["number"] for item in archive_entries if "audio.tkkg-site.de" in item.get("source_url", "")],
+                            "stage": "robots",
+                            "error": "Post fetching skipped because robots.txt access was previously denied with HTTP 403.",
+                            "note": "These episodes are covered by the official catalogue. Access restrictions were not bypassed.",
+                        })
+                    continue
             except SourceAccessError as exc:
                 source_url = entry.get("source_url", "")
                 if "audio.tkkg-site.de" in source_url:
