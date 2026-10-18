@@ -21,39 +21,45 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
-      - name: Fetch permitted public HTML and summarize card structure
+      - name: Inspect permitted catalogue pages and save the first page
         run: |
           python - <<'PY'
           from pathlib import Path
-          from scraper.http import SourceClient
           from bs4 import Tag
+          from scraper.http import SourceClient
 
-          url = "https://www.tkkg.de/produkte/hoerspiele"
-          soup = SourceClient().get_html(url)
+          base = "https://www.tkkg.de/produkte/hoerspiele"
+          client = SourceClient()
           Path("data").mkdir(exist_ok=True)
-          Path("data/official-page-debug.html").write_text(str(soup), encoding="utf-8")
-          print(f"Fetched {len(str(soup))} characters from {url}")
-          printed = 0
-          for heading in soup.find_all(["h4", "h5", "h6"]):
-              label = " ".join(heading.get_text(" ", strip=True).split())
-              if "TKKG Hörspiel-Folge" not in label:
-                  continue
-              print(f"\nHEADING: {label}")
-              for depth, parent in enumerate(list(heading.parents)[:8], start=1):
-                  if not isinstance(parent, Tag):
+          for page in range(25):
+              url = base if page == 0 else f"{base}?page={page}"
+              soup = client.get_html(url)
+              if page == 0:
+                  Path("data/official-page-debug.html").write_text(str(soup), encoding="utf-8")
+              headings = []
+              for heading in soup.find_all(["h4", "h5", "h6"]):
+                  label = " ".join(heading.get_text(" ", strip=True).split())
+                  if "TKKG Hörspiel-Folge" not in label:
                       continue
-                  classes = parent.get("class", [])
-                  print(
-                      f"  ancestor[{depth}] tag={parent.name} class={classes!r} "
-                      f"h4_count={len(parent.find_all('h4'))} "
-                      f"has_img={parent.find('img') is not None}"
-                  )
-              printed += 1
-              if printed >= 3:
-                  break
-          print(f"Sampled {printed} episode headings")
+                  panel = next((p for p in heading.parents if isinstance(p, Tag) and p.name == "div" and p.get("id") and "collapse" in p.get("class", [])), None)
+                  teaser = panel.find_previous_sibling("div") if panel else None
+                  image = teaser.find("img") if isinstance(teaser, Tag) else None
+                  title = teaser.find(["h2", "h3"]) if isinstance(teaser, Tag) else None
+                  headings.append({
+                      "heading": label,
+                      "panel": panel.get("id") if panel else None,
+                      "title": " ".join(title.get_text(" ", strip=True).split()) if title else None,
+                      "image_alt": image.get("alt") if image else None,
+                  })
+              print(f"PAGE {page} ({url}): {len(headings)} headings")
+              if headings:
+                  print(f"  first={headings[0]}")
+                  print(f"  last={headings[-1]}")
+                  suspicious = [h for h in headings if h["heading"].endswith("500")]
+                  if suspicious:
+                      print(f"  NUMBER_500={suspicious}")
           PY
-      - name: Upload HTML fixture for inspection
+      - name: Upload first-page HTML fixture
         if: always()
         uses: actions/upload-artifact@v7
         with:
