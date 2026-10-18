@@ -280,20 +280,25 @@ def parse_archive_episode(client: SourceClient, discovered: dict) -> dict:
 
     speaker_heading = next((h for h in soup.find_all(list(HEADING_TAGS)) if _clean(h.get_text(" ", strip=True)).casefold() == "sprecher"), None)
     if speaker_heading:
-        for node in speaker_heading.next_elements:
-            if isinstance(node, Tag) and node.name in HEADING_TAGS:
+        # Speaker credits are represented as definition lists (character in dt,
+        # actor in dd). Restrict parsing to those lists immediately following
+        # the heading; walking all descendants also traverses the site footer.
+        for sibling in speaker_heading.next_siblings:
+            if isinstance(sibling, Tag) and sibling.name in HEADING_TAGS:
                 break
-            if not isinstance(node, Tag) or node.name != "a":
+            if not isinstance(sibling, Tag):
                 continue
-            name = _clean(node.get_text(" ", strip=True))
-            if not name:
-                continue
-            character = None
-            dt = node.find_previous("dt")
-            if dt and dt.find_previous("h1") is not None:
-                character_text = _clean(dt.get_text(" ", strip=True)).rstrip(":")
-                character = character_text or None
-            record["cast"].append({"name": name, "character": character})
+            speaker_lists = [sibling] if sibling.name == "dl" else sibling.find_all("dl")
+            for speaker_list in speaker_lists:
+                for node in speaker_list.find_all("a"):
+                    name = _clean(node.get_text(" ", strip=True))
+                    if not name:
+                        continue
+                    dt = node.find_previous("dt")
+                    if dt is None or dt.find_parent("dl") is not speaker_list:
+                        continue
+                    character_text = _clean(dt.get_text(" ", strip=True)).rstrip(":")
+                    record["cast"].append({"name": name, "character": character_text or None})
 
     for line in _section_lines(soup, "Produktion"):
         match = re.match(r"([^:]{2,60}):\s*(.+)", line)
