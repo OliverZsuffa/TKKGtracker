@@ -192,6 +192,42 @@ class SourceParserTests(unittest.TestCase):
         self.assertNotIn("release_date", physical)
         self.assertIsNone(record["release_year"])
 
+    def test_archive_speaker_parser_ignores_footer_and_navigation_links(self):
+        url = "https://www.tkkg-site.de/de/hoeren/hoerspiele/serie/folge-206/inhalt.html"
+        client = FakeClient({url: '''
+          <h1>Folge 206: Achtung, UFO-Kult!</h1>
+          <h3>Sprecher</h3>
+          <dl>
+            <dt>Tim</dt><dd><a href="/sprecher/sascha-draeger">Sascha Draeger</a></dd>
+            <dt>Karl</dt><dd><a href="/sprecher/tobias-diakow">Tobias Diakow</a></dd>
+            <dt>Kommissar Schalavsky</dt><dd><a href="/sprecher/stephan-schad">Stephan Schad</a></dd>
+          </dl>
+          <footer>
+            <nav>
+              <a href="/serie">Kommissar Krause · Hörspiele</a>
+              <a href="/serie">Kommissar Krause · Serie</a>
+              <a href="/einzeltitel">Einzeltitel</a>
+              <a href="/boxen">TKKG-Boxen</a>
+              <a href="/musik">Musik</a>
+              <a href="/archiv">TKKG-Site.de-Archiv</a>
+              <a href="/blog">Blog</a><a href="/forum">Forum</a>
+              <a href="#top">nach oben</a><a href="/">Startseite</a>
+              <a href="/kontakt">Kontakt</a><a href="/datenschutz">Datenschutz</a>
+              <a href="/impressum">Impressum</a>
+            </nav>
+          </footer>
+          <h3>Produktion</h3><p>Regie: Heikedine Körting</p>
+        '''})
+        discovered = {"number": 206, "title": "Achtung, UFO-Kult!", "source_url": url, "source_name": "TKKG-Site archive"}
+        record = parse_archive_episode(client, discovered)
+        self.assertEqual(record["cast"], [
+            {"name": "Sascha Draeger", "character": "Tim"},
+            {"name": "Tobias Diakow", "character": "Karl"},
+            {"name": "Stephan Schad", "character": "Kommissar Schalavsky"},
+        ])
+        self.assertFalse(any("Kommissar Krause" in item["name"] for item in record["cast"]))
+        self.assertFalse(any(item["name"] in {"Einzeltitel", "TKKG-Boxen", "Musik", "TKKG-Site.de-Archiv", "Blog", "Forum", "nach oben", "Startseite", "Kontakt", "Datenschutz", "Impressum"} for item in record["cast"]))
+
     def test_official_page_extracts_details_from_linked_teaser_and_collapse_panel(self):
         url = "https://www.tkkg.de/produkte/hoerspiele"
         client = FakeClient({url: official_product(243, "Die Fährte des Hehlers", "Ein Fall mit einem Hehler.")})
@@ -270,6 +306,34 @@ class SourceParserTests(unittest.TestCase):
         self.assertEqual(record["cast"][0], {"name": "Sascha Draeger", "character": "Tim"})
         self.assertTrue(record["cover_url"].endswith("/cover-222.jpg"))
         self.assertEqual(record["sources"][0]["url"], url)
+
+    def test_official_listing_uses_details_copyright_year_without_fabricating_date(self):
+        url = "https://www.tkkg.de/produkte/hoerspiele"
+        html = official_product(224, "Bilderdiebe haben kein Gesicht", "Ein Fall.")
+        html = html.replace(
+            "Redaktion: Petra Delmar</p>",
+            "Redaktion: Petra Delmar<br>© 2022 - Eine Produktion der Sony Music Entertainment Germany GmbH</p>",
+        )
+        record = parse_official_page(FakeClient({url: html}), 0)[0]
+        self.assertEqual(record["release_year"], 2022)
+        self.assertIsNone(record["release_date"])
+
+    def test_official_detail_copyright_year_is_fallback_but_explicit_date_wins(self):
+        number = 222
+        url = SUPPLEMENTAL_DETAIL_URLS[number]
+        html = official_detail(number, "Roter Drache 222", "Ein spannender Fall.", "15.04.2022")
+        html = html.replace(
+            "Redaktion: Petra Delmar</p>",
+            "Redaktion: Petra Delmar<br>© 2020 - Eine Produktion der Sony Music Entertainment Germany GmbH</p>",
+        )
+        record = parse_official_detail_page(FakeClient({url: html}), number, url)
+        self.assertEqual(record["release_date"], "2022-04-15")
+        self.assertEqual(record["release_year"], 2022)
+
+        no_date_html = html.replace("<p>Veröffentlichkeitsdatum: 15.04.2022</p>", "")
+        fallback = parse_official_detail_page(FakeClient({url: no_date_html}), number, url)
+        self.assertIsNone(fallback["release_date"])
+        self.assertEqual(fallback["release_year"], 2020)
 
     def test_official_discovery_uses_verified_detail_fallbacks_for_listing_gaps(self):
         base = "https://www.tkkg.de/produkte/hoerspiele"

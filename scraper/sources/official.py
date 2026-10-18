@@ -95,6 +95,16 @@ def _base_record(number: int, title: str, url: str, synopsis: str | None, cover_
     }
 
 
+def _copyright_year(panel: Tag | BeautifulSoup) -> int | None:
+    """Return a year explicitly stated in the episode's Details copyright line."""
+    for line in _section_lines(panel, "Details"):
+        if re.search(r"©\s*", line):
+            match = re.search(r"©\s*((?:19|20)\d{2})\b", line)
+            if match:
+                return int(match.group(1))
+    return None
+
+
 def _parse_cast(panel: Tag | BeautifulSoup) -> list[dict]:
     cast = []
     for line in _section_lines(panel, "Sprecher"):
@@ -190,7 +200,7 @@ def parse_official_page(client: SourceClient, page_number: int, diagnostics: lis
             synopsis=_section(panel, "Inhalt"),
             cover_url=image_url,
             release_date=None,
-            release_year=None,
+            release_year=_copyright_year(panel),
             cast=_parse_cast(panel),
             credits=_parse_credits(panel),
         ))
@@ -235,6 +245,8 @@ def parse_official_detail_page(client: SourceClient, number: int, url: str) -> d
         parsed_date = datetime.strptime(date_match.group(1), "%d.%m.%Y").date()
         release_date = parsed_date.isoformat()
         release_year = parsed_date.year
+    else:
+        release_year = _copyright_year(soup)
 
     return _base_record(
         number=number,
