@@ -9,12 +9,12 @@ from scraper.http import SourceClient
 
 
 BASE_URL = "https://www.tkkg.de/produkte/hoerspiele"
-EPISODE_HEADING = re.compile(r"TKKG\\s+Hörspiel-Folge\\s+(\\d+)", re.IGNORECASE)
+EPISODE_HEADING = re.compile(r"TKKG\s+Hörspiel-Folge\s+(\d+)", re.IGNORECASE)
 HEADING_TAGS = {"h5", "h6"}
 
 
 def _clean(text: str) -> str:
-    return re.sub(r"\\s+", " ", text).strip()
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def _section_lines(card: Tag, label: str) -> list[str]:
@@ -27,7 +27,7 @@ def _section_lines(card: Tag, label: str) -> list[str]:
         if isinstance(sibling, Tag) and sibling.name in HEADING_TAGS:
             break
         if isinstance(sibling, Tag):
-            value = sibling.get_text("\\n", strip=True)
+            value = sibling.get_text("\n", strip=True)
             lines.extend(_clean(line) for line in value.splitlines() if _clean(line))
         elif str(sibling).strip():
             lines.append(_clean(str(sibling)))
@@ -86,7 +86,7 @@ def parse_official_page(client: SourceClient, page_number: int, diagnostics: lis
             continue
 
         if not title:
-            title_match = re.search(r"Folge\\s+\\d+\\s*:\\s*(.+)$", alt, re.IGNORECASE)
+            title_match = re.search(r"Folge\s+\d+\s*:\s*(.+)$", alt, re.IGNORECASE)
             title = _clean(title_match.group(1)) if title_match else ""
         if not title or any(term in title.casefold() for term in ("live-album", "live album", "hörspiel-box", "krimi-box")):
             if diagnostics is not None:
