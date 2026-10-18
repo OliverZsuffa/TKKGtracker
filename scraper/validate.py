@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from jsonschema import Draft202012Validator, FormatChecker
@@ -18,6 +19,23 @@ def validate_catalogue(episodes: list[dict], schema_path: Path | None = None) ->
     for index, episode in enumerate(episodes):
         for error in validator.iter_errors(episode):
             errors.append(f"episode index {index}: {error.message}")
+        for release_index, release in enumerate(episode.get("physical_releases", [])):
+            for field in ("medium", "label", "ean", "release_date"):
+                value = release.get(field)
+                if not isinstance(value, str) or not value.strip():
+                    continue
+                if value.strip().casefold() in {"medium:", "label:", "ean:", "erscheinungstermin:"}:
+                    errors.append(
+                        f"episode {episode.get('number')} physical release {release_index}: "
+                        f"{field} contains a field label instead of a value"
+                    )
+            ean = release.get("ean")
+            if isinstance(ean, str) and ean.strip() and not re.search(r"\\d{8,14}", ean):
+                errors.append(
+                    f"episode {episode.get('number')} physical release {release_index}: "
+                    "EAN contains no plausible 8–14 digit identifier"
+                )
+
         number = episode.get("number")
         title = episode.get("title")
         if isinstance(number, int):
