@@ -45,14 +45,23 @@ def main() -> int:
                 elif entry["number"] >= 207 and "audio.tkkg-site.de" in entry["source_url"]:
                     archive_records.append(parse_tumblr_episode(client, entry))
             except SourceAccessError as exc:
-                report["warnings"].append(str(exc))
+                report["warnings"].append({
+                    "source": "archive",
+                    "number": entry.get("number"),
+                    "title": entry.get("title"),
+                    "source_url": entry.get("source_url"),
+                    "stage": "fetch",
+                    "error": str(exc),
+                })
 
-        official_records = discover_official_episodes(client)
+        official_diagnostics: list[dict] = []
+        official_records = discover_official_episodes(client, diagnostics=official_diagnostics)
         report["sources"]["official_records"] = len(official_records)
         report["sources"]["official_max_number"] = max((item["number"] for item in official_records), default=0)
+        report["sources"]["official_rejected_records"] = official_diagnostics
+        report["sources"]["official_rejected_count"] = len(official_diagnostics)
         report["sources"]["archive_detail_records"] = len(archive_records)
 
-        # Archive records are the preferred title source for episodes it explicitly indexes.
         archive_records.sort(key=lambda item: item["number"])
         official_records.sort(key=lambda item: item["number"])
         combined = archive_records + official_records
@@ -61,8 +70,6 @@ def main() -> int:
         report["gaps"] = find_number_gaps(episodes)
         report["episode_count"] = len(episodes)
 
-        # The archive currently indexes through episode 217. Require the official source to
-        # contribute a newer episode, but do not hard-code the current maximum episode number.
         archive_max = report["sources"]["archive_index_max_number"]
         official_max = report["sources"]["official_max_number"]
         if archive_max < HISTORICAL_INDEX_LATEST:
@@ -74,7 +81,6 @@ def main() -> int:
         if report["gaps"]:
             raise RuntimeError(f"Unexplained numbering gaps detected: {report['gaps']}. Refusing to publish an incomplete catalogue.")
 
-        # Provenance timestamps are part of the schema, so add them before validation.
         for episode in episodes:
             episode["last_checked"] = now
             for source in episode["sources"]:
@@ -90,14 +96,14 @@ def main() -> int:
         write_catalogue(episodes, DATA_DIR)
         report["success"] = True
         report["finished_at"] = datetime.now(timezone.utc).isoformat()
-        REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
         print(f"Published {len(episodes)} episode records. Conflicts: {len(conflicts)}.")
         return 0
     except Exception as exc:
         report["fatal_error"] = str(exc)
         report["finished_at"] = datetime.now(timezone.utc).isoformat()
         REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
-        REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
         print(f"Catalogue refresh failed: {exc}", file=sys.stderr)
         return 1
 
