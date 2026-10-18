@@ -24,9 +24,10 @@ class FakeClient:
         return BeautifulSoup(self.pages[url], "html.parser")
 
 
-def official_product(number: int, title: str, synopsis: str, image_number: int | None = None) -> str:
+def official_product(number: int, title: str, synopsis: str, image_number: int | None = None, listening_url: str | None = None) -> str:
     image_number = number if image_number is None else image_number
     panel_id = f"detail{number}"
+    listening_anchor = f'<a href="{listening_url}">Jetzt anhören</a>' if listening_url else ""
     return f'''
       <div class="row mb-10">
         <div class="col-12 col-md-6 col-lg-4 mb-16">
@@ -45,6 +46,7 @@ def official_product(number: int, title: str, synopsis: str, image_number: int |
               <h5>Details</h5><p>Produktion und Regie: Heikedine Körting<br>Redaktion: Petra Delmar</p>
             </div>
           </div>
+          {listening_anchor}
         </div>
       </div>
     '''
@@ -230,7 +232,8 @@ class SourceParserTests(unittest.TestCase):
 
     def test_official_page_extracts_details_from_linked_teaser_and_collapse_panel(self):
         url = "https://www.tkkg.de/produkte/hoerspiele"
-        client = FakeClient({url: official_product(243, "Die Fährte des Hehlers", "Ein Fall mit einem Hehler.")})
+        html = official_product(243, "Die Fährte des Hehlers", "Ein Fall mit einem Hehler.", listening_url="https://tkkg.lnk.to/-243AW")
+        client = FakeClient({url: html})
         records = parse_official_page(client, 0)
         self.assertEqual(len(records), 1)
         self.assertEqual(records[0]["number"], 243)
@@ -245,6 +248,13 @@ class SourceParserTests(unittest.TestCase):
             {"role": "Redaktion", "name": "Petra Delmar"},
         ])
         self.assertTrue(records[0]["cover_url"].endswith("/cover-243.jpg"))
+        self.assertEqual(records[0]["listening_links"], [{
+            "service": "official",
+            "label": "Official listening page",
+            "url": "https://tkkg.lnk.to/-243AW",
+            "link_type": "official_hub",
+            "source_url": url,
+        }])
 
     def test_official_page_excludes_movie_tie_in_numbered_500(self):
         url = "https://www.tkkg.de/produkte/hoerspiele"

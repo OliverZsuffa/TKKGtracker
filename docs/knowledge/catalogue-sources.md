@@ -41,3 +41,12 @@ Use independent source adapters and saved HTML fixtures for tests. Store source 
 - Do not parse these fields by matching each label to the next line in flattened page text. Associate the label and value columns/blocks structurally and preserve their order. Do not assume every episode has every field.
 - A release entry can describe multiple media editions and dates. Preserve the archive's full release text in the physical-release record. The top-level `release_year` may use a year explicitly present in that text; the top-level `release_date` remains null unless a single complete date can be represented without ambiguity.
 - Catalogue validation should reject field labels stored as values and an EAN field that contains no plausible digit identifier. This is intended to prevent malformed extraction from publishing even when it passes the JSON schema.
+
+
+## Official episode listening links (verified 18 October 2026)
+
+- The official listing at https://www.tkkg.de/produkte/hoerspiele exposes a separate “Jetzt anhören” destination for individual episode cards. For example, the link for episode 243 resolves to https://tkkg.lnk.to/-243AW, whose landing page is titled “TKKG - Folge 243: Die Fährte des Hehlers”.
+- The landing page is an episode-specific official listening hub. It is safe to label it as an official episode listening page, but platform availability should not be inferred merely from the hub URL.
+- The official universal page https://tkkg.lnk.to/alle-hoerspiele and the official playlists page are series-wide destinations, not per-episode links. Do not assign the generic URL to every episode as if it were a direct episode destination.
+- When parsing the official listing, associate each “Jetzt anhören” link only with the adjacent episode detail panel and stop at the next product teaser. Validate the destination as HTTPS on the exact tkkg.lnk.to hostname. Do not synthesize Linkfire aliases from episode numbers.
+- Service-specific searches (Spotify, Apple Music, Amazon Music, Deezer, YouTube Music, YouTube) may be offered as clearly labelled search shortcuts. They are not evidence that a particular release is available on that service.

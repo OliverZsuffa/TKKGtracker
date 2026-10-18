@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup, Tag
 
@@ -91,6 +91,7 @@ def _base_record(number: int, title: str, url: str, synopsis: str | None, cover_
         "cast": cast,
         "credits": credits,
         "ratings": [],
+        "listening_links": [],
         "sources": [{"name": "Official TKKG catalogue", "url": url}],
     }
 
@@ -122,6 +123,35 @@ def _parse_credits(panel: Tag | BeautifulSoup) -> list[dict]:
             credits.append({"role": _clean(role), "name": _clean(name)})
     return credits
 
+
+
+def _official_listening_link(panel: Tag, source_url: str) -> list[dict]:
+    """Extract the episode-specific Linkfire destination from this card only."""
+    candidates = list(panel.find_all("a"))
+    for sibling in panel.next_siblings:
+        if not isinstance(sibling, Tag):
+            continue
+        # The next product teaser marks the end of this episode's card.
+        if sibling.name == "div" and sibling.find("img") and sibling.find(["h2", "h3"]):
+            break
+        candidates.extend([sibling] if sibling.name == "a" else sibling.find_all("a"))
+
+    for anchor in candidates:
+        label = _clean(anchor.get_text(" ", strip=True)).casefold()
+        href = anchor.get("href")
+        if label != "jetzt anhören" or not isinstance(href, str):
+            continue
+        destination = urljoin(source_url, href)
+        parsed = urlparse(destination)
+        if parsed.scheme == "https" and parsed.hostname == "tkkg.lnk.to" and parsed.path not in ("", "/alle-hoerspiele"):
+            return [{
+                "service": "official",
+                "label": "Official listening page",
+                "url": destination,
+                "link_type": "official_hub",
+                "source_url": source_url,
+            }]
+    return []
 
 def parse_official_page(client: SourceClient, page_number: int, diagnostics: list[dict] | None = None) -> list[dict]:
     url = BASE_URL if page_number == 0 else f"{BASE_URL}?page={page_number}"
@@ -193,7 +223,7 @@ def parse_official_page(client: SourceClient, page_number: int, diagnostics: lis
             if image_src:
                 image_url = urljoin(url, image_src)
 
-        records.append(_base_record(
+        record = _base_record(
             number=number,
             title=title,
             url=url,
@@ -203,7 +233,9 @@ def parse_official_page(client: SourceClient, page_number: int, diagnostics: lis
             release_year=_copyright_year(panel),
             cast=_parse_cast(panel),
             credits=_parse_credits(panel),
-        ))
+        )
+        record["listening_links"] = _official_listening_link(panel, url)
+        records.append(record)
     return records
 
 
@@ -248,7 +280,7 @@ def parse_official_detail_page(client: SourceClient, number: int, url: str) -> d
     else:
         release_year = _copyright_year(soup)
 
-    return _base_record(
+    record = _base_record(
         number=number,
         title=title,
         url=url,
@@ -259,6 +291,24 @@ def parse_official_detail_page(client: SourceClient, number: int, url: str) -> d
         cast=_parse_cast(soup),
         credits=_parse_credits(soup),
     )
+    for anchor in soup.find_all("a"):
+        if _clean(anchor.get_text(" ", strip=True)).casefold() != "jetzt anhören":
+            continue
+        href = anchor.get("href")
+        if not isinstance(href, str):
+            continue
+        destination = urljoin(url, href)
+        parsed = urlparse(destination)
+        if parsed.scheme == "https" and parsed.hostname == "tkkg.lnk.to" and parsed.path not in ("", "/alle-hoerspiele"):
+            record["listening_links"] = [{
+                "service": "official",
+                "label": "Official listening page",
+                "url": destination,
+                "link_type": "official_hub",
+                "source_url": url,
+            }]
+            break
+    return record
 
 
 def discover_official_episodes(client: SourceClient, max_pages: int = 30, diagnostics: list[dict] | None = None) -> list[dict]:

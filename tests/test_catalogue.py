@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 
 from scraper.merge import merge_records
-from scraper.validate import find_number_gaps, validate_catalogue
+from scraper.validate import find_number_gaps, listening_link_coverage, validate_catalogue
 
 
 def episode(number: int, title: str, **extra) -> dict:
@@ -20,6 +20,7 @@ def episode(number: int, title: str, **extra) -> dict:
         "cast": [],
         "credits": [],
         "ratings": [],
+        "listening_links": [],
         "sources": [{"name": "test", "url": "https://example.com/episode", "retrieved_at": "2026-10-18T00:00:00+00:00"}],
         "last_checked": "2026-10-18T00:00:00+00:00",
     }
@@ -30,6 +31,17 @@ def episode(number: int, title: str, **extra) -> dict:
 class CatalogueTests(unittest.TestCase):
     def test_valid_episode_passes_schema(self):
         self.assertEqual(validate_catalogue([episode(1, "Test Folge")]), [])
+
+    def test_invalid_listening_destination_is_rejected(self):
+        malformed = episode(1, "Test Folge", listening_links=[{
+            "service": "official",
+            "label": "Official listening page",
+            "url": "https://example.com/episode",
+            "link_type": "official_hub",
+            "source_url": "https://www.tkkg.de/produkte/hoerspiele",
+        }])
+        errors = validate_catalogue([malformed])
+        self.assertTrue(any("does not match" in error for error in errors))
 
     def test_duplicate_numbers_are_rejected(self):
         errors = validate_catalogue([episode(1, "A"), episode(1, "B")])
@@ -83,6 +95,37 @@ class CatalogueTests(unittest.TestCase):
             "source_url": "https://example.com/episode",
         }], release_year=1981)
         self.assertEqual(validate_catalogue([valid]), [])
+
+    def test_merge_preserves_official_listening_links(self):
+        base = episode(1, "A")
+        enrichment = episode(1, "A", listening_links=[{
+            "service": "official",
+            "label": "Official listening page",
+            "url": "https://tkkg.lnk.to/-001AW",
+            "link_type": "official_hub",
+            "source_url": "https://www.tkkg.de/produkte/hoerspiele",
+        }])
+        merged, conflicts = merge_records([base, enrichment])
+        self.assertEqual(conflicts, [])
+        self.assertEqual(merged[0]["listening_links"], enrichment["listening_links"])
+
+    def test_listening_link_coverage_reports_hubs_and_missing_episodes(self):
+        linked = episode(1, "A", listening_links=[{
+            "service": "official",
+            "label": "Official listening page",
+            "url": "https://tkkg.lnk.to/-001AW",
+            "link_type": "official_hub",
+            "source_url": "https://www.tkkg.de/produkte/hoerspiele",
+        }])
+        coverage = listening_link_coverage([linked, episode(2, "B")])
+        self.assertEqual(coverage["episode_count"], 2)
+        self.assertEqual(coverage["episodes_with_listening_links"], 1)
+        self.assertEqual(coverage["episodes_without_listening_links"], [{"number": 2, "title": "B"}])
+        self.assertEqual(coverage["links_by_service"], {"official": 1})
+        self.assertEqual(coverage["links_by_type"], {"official_hub": 1})
+        self.assertEqual(coverage["direct_episode_or_release_link_count"], 0)
+        self.assertEqual(coverage["hub_or_fallback_link_count"], 1)
+        self.assertEqual(coverage["invalid_links"], [])
 
     def test_title_conflicts_are_reported(self):
         merged, conflicts = merge_records([episode(1, "A"), episode(1, "Different")])

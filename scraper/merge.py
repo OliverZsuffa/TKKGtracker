@@ -3,7 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 
 
-LIST_FIELDS = ("physical_releases", "tracks", "cast", "credits", "ratings", "sources")
+LIST_FIELDS = ("physical_releases", "tracks", "cast", "credits", "ratings", "sources", "listening_links")
 
 
 def merge_records(records: list[dict]) -> tuple[list[dict], list[dict]]:
@@ -27,6 +27,7 @@ def merge_records(records: list[dict]) -> tuple[list[dict], list[dict]]:
                 "credits": [],
                 "ratings": [],
                 "sources": [],
+                "listening_links": [],
                 "last_checked": incoming.get("last_checked"),
             }
             by_number[number] = current
