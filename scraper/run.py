@@ -10,7 +10,7 @@ from scraper.http import SourceAccessError, SourceClient
 from scraper.merge import merge_records
 from scraper.sources.archive import discover_archive_episodes, parse_archive_episode
 from scraper.sources.official import SUPPLEMENTAL_DETAIL_URLS, discover_official_episodes
-from scraper.validate import find_number_gaps, validate_catalogue
+from scraper.validate import find_number_gaps, listening_link_coverage, validate_catalogue
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -98,6 +98,7 @@ def main() -> int:
         report["conflicts"] = conflicts
         report["gaps"] = find_number_gaps(episodes)
         report["episode_count"] = len(episodes)
+        report["listening_link_coverage"] = listening_link_coverage(episodes)
 
         archive_max = report["sources"]["archive_index_max_number"]
         official_max = report["sources"]["official_max_number"]
