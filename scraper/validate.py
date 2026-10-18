@@ -30,7 +30,7 @@ def validate_catalogue(episodes: list[dict], schema_path: Path | None = None) ->
                         f"{field} contains a field label instead of a value"
                     )
             ean = release.get("ean")
-            if isinstance(ean, str) and ean.strip() and not re.search(r"\\d{8,14}", ean):
+            if isinstance(ean, str) and ean.strip() and not re.search(r"\d{8,14}", ean):
                 errors.append(
                     f"episode {episode.get('number')} physical release {release_index}: "
                     "EAN contains no plausible 8–14 digit identifier"
