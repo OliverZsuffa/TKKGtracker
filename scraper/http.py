@@ -21,7 +21,7 @@ class SourceClient:
         self.session.headers.update({"User-Agent": USER_AGENT})
         self.delay_seconds = delay_seconds
         self._robots: dict[str, RobotFileParser | None] = {}
-        self._cache: dict[str, str] = {}
+        self._cache: dict[str, bytes] = {}
         self._last_request = 0.0
 
     def _robots_for(self, url: str) -> RobotFileParser | None:
@@ -62,5 +62,5 @@ class SourceClient:
             raise SourceAccessError(f"Could not fetch {url}: {exc}") from exc
         if "text/html" not in response.headers.get("Content-Type", "").lower():
             raise SourceAccessError(f"Expected HTML at {url}, got {response.headers.get('Content-Type', 'unknown')}")
-        self._cache[url] = response.text
-        return BeautifulSoup(response.text, "html.parser")
+        self._cache[url] = response.content
+        return BeautifulSoup(response.content, "html.parser")
