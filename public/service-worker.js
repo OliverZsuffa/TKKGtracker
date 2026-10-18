@@ -21,6 +21,29 @@ self.addEventListener("install", (event) => {
         // A failed pre-cache must not prevent installation.
       }
     }));
+
+    // The first page load happens before this worker can intercept asset requests.
+    // Pre-cache the JS/CSS referenced by the cached HTML so one successful online
+    // visit is enough to make the app shell available offline.
+    try {
+      const entry = await cache.match(APP_ENTRY_URL);
+      if (entry) {
+        const html = await entry.text();
+        const assetUrls = [...html.matchAll(/(?:src|href)="([^"]+\.(?:js|css))"/g)]
+          .map((match) => new URL(match[1], APP_BASE).href);
+        await Promise.all(assetUrls.map(async (url) => {
+          try {
+            const response = await fetch(url, { cache: "reload" });
+            if (response.ok) await cache.put(url, response);
+          } catch {
+            // Keep going if an optional asset cannot be fetched.
+          }
+        }));
+      }
+    } catch {
+      // The bundled catalogue remains a fallback if shell asset discovery fails.
+    }
+
     await self.skipWaiting();
   })());
 });
