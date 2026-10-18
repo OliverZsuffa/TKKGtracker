@@ -1,7 +1,7 @@
 # Request: Complete TKKG catalogue and listening tracker
 
 ## Status
-Awaiting approval
+Approved
 
 ## Desired outcome
 Build a static web application that lists all regular episodes in the main TKKG audio drama series and lets Oliver mark episodes as listened to. A Python scraper will collect catalogue data and GitHub Actions will periodically refresh the validated dataset.
