@@ -1,7 +1,7 @@
 # Request: Fix live catalogue refresh and Actions warnings
 
 ## Status
-Awaiting approval
+Approved 18 October 2026; implementation and live verification in progress
 
 ## Desired outcome
 The scheduled/manual catalogue refresh should discover the regular main-series TKKG episodes from the public sources, validate the result, and only then update the catalogue and trigger deployment. GitHub Actions should use maintained runner/action versions compatible with the current Node.js runtime.
