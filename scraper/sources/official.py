@@ -10,28 +10,33 @@ from scraper.http import SourceClient
 
 BASE_URL = "https://www.tkkg.de/produkte/hoerspiele"
 EPISODE_HEADING = re.compile(r"TKKG\s+Hörspiel-Folge\s+(\d+)", re.IGNORECASE)
+HEADING_TAGS = {"h5", "h6"}
 
 
 def _clean(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def _section(card: Tag, label: str) -> str | None:
+def _section_lines(card: Tag, label: str) -> list[str]:
     headings = card.find_all(["h5", "h6"])
     target = next((h for h in headings if _clean(h.get_text(" ", strip=True)).casefold() == label.casefold()), None)
     if target is None:
-        return None
-    parts: list[str] = []
+        return []
+    lines: list[str] = []
     for sibling in target.next_siblings:
-        if isinstance(sibling, Tag) and sibling.name in {"h5", "h6"}:
+        if isinstance(sibling, Tag) and sibling.name in HEADING_TAGS:
             break
         if isinstance(sibling, Tag):
-            value = _clean(sibling.get_text(" ", strip=True))
-            if value:
-                parts.append(value)
+            value = sibling.get_text("\n", strip=True)
+            lines.extend(_clean(line) for line in value.splitlines() if _clean(line))
         elif str(sibling).strip():
-            parts.append(_clean(str(sibling)))
-    result = _clean(" ".join(parts))
+            lines.append(_clean(str(sibling)))
+    return lines
+
+
+def _section(card: Tag, label: str) -> str | None:
+    lines = _section_lines(card, label)
+    result = _clean(" ".join(lines))
     return result or None
 
 
@@ -67,27 +72,21 @@ def parse_official_page(client: SourceClient, page_number: int) -> list[dict]:
         image = card.find("img")
         image_url = None
         if image:
-            image_url = urljoin(url, image.get("src") or image.get("data-src") or image.get("data-lazy-src") or "")
-            if image_url.endswith("/"):
-                image_url = None
+            image_src = image.get("src") or image.get("data-src") or image.get("data-lazy-src")
+            if image_src:
+                image_url = urljoin(url, image_src)
 
         synopsis = _section(card, "Inhalt")
-        cast_text = _section(card, "Sprecher")
-        details_text = _section(card, "Details")
         cast = []
-        if cast_text:
-            for line in re.split(r"\s{2,}|(?<=[.!])\s+(?=[A-ZÄÖÜ][^ ]+\s+-)", cast_text):
-                line = _clean(line)
-                if " - " in line:
-                    character, name = line.split(" - ", 1)
-                    cast.append({"name": _clean(name), "character": _clean(character)})
+        for line in _section_lines(card, "Sprecher"):
+            if " - " in line:
+                character, name = line.split(" - ", 1)
+                cast.append({"name": _clean(name), "character": _clean(character)})
         credits = []
-        if details_text:
-            for part in re.split(r"\s{2,}|(?<=\.)\s+(?=[A-ZÄÖÜ])", details_text):
-                part = _clean(part)
-                if ":" in part:
-                    role, name = part.split(":", 1)
-                    credits.append({"role": _clean(role), "name": _clean(name)})
+        for line in _section_lines(card, "Details"):
+            if ":" in line:
+                role, name = line.split(":", 1)
+                credits.append({"role": _clean(role), "name": _clean(name)})
 
         records.append({
             "number": number,
