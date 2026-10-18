@@ -40,7 +40,9 @@ export default function App() {
 
   function updateEpisode(number: number, patch: Partial<EpisodeProgress>) {
     setProgress((current) => {
-      const next = { ...current, [String(number)]: { listened: false, ...current[String(number)], ...patch } };
+      const key = String(number);
+      const existing = current[key] ?? { listened: false };
+      const next = { ...current, [key]: { ...existing, ...patch } };
       saveProgress(next);
       return next;
     });
@@ -156,6 +158,19 @@ export default function App() {
             {selectedEpisode.tracks.length > 0 && <section><h3>Tracks</h3><ol>{selectedEpisode.tracks.map((track, index) => <li key={index}>{track.title}</li>)}</ol></section>}
             {selectedEpisode.cast.length > 0 && <section><h3>Sprecher</h3><ul>{selectedEpisode.cast.map((person, index) => <li key={index}>{person.character ? `${person.character} · ${person.name}` : person.name}</li>)}</ul></section>}
             {selectedEpisode.credits.length > 0 && <section><h3>Produktion</h3><ul>{selectedEpisode.credits.map((credit, index) => <li key={index}>{credit.role}: {credit.name}</li>)}</ul></section>}
+            {selectedEpisode.ratings.length > 0 && <section><h3>Bewertungen</h3><ul>{selectedEpisode.ratings.map((rating, index) => <li key={index}>{rating.category}: {rating.value} ({rating.source})</li>)}</ul></section>}
+            <section className="personal-notes">
+              <h3>Deine Notizen</h3>
+              <label>Persönliche Bewertung
+                <select value={progress[String(selectedEpisode.number)]?.personalRating ?? ""} onChange={(event) => updateEpisode(selectedEpisode.number, { personalRating: event.target.value ? Number(event.target.value) : undefined })}>
+                  <option value="">Keine Bewertung</option>
+                  <option value="1">1 / 5</option><option value="2">2 / 5</option><option value="3">3 / 5</option><option value="4">4 / 5</option><option value="5">5 / 5</option>
+                </select>
+              </label>
+              <label>Notizen
+                <textarea value={progress[String(selectedEpisode.number)]?.notes ?? ""} onChange={(event) => updateEpisode(selectedEpisode.number, { notes: event.target.value })} rows={3} placeholder="Was ist dir zu dieser Folge in Erinnerung geblieben?" />
+              </label>
+            </section>
             {selectedEpisode.sources.map((source) => <p key={source.url} className="source-link"><a href={source.url} target="_blank" rel="noreferrer">Quelle: {source.name}</a></p>)}
             <button className="primary-button" onClick={() => updateEpisode(selectedEpisode.number, { listened: !progress[String(selectedEpisode.number)]?.listened })}>
               {progress[String(selectedEpisode.number)]?.listened ? "Als nicht gehört markieren" : "Als gehört markieren"}
