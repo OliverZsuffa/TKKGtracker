@@ -1,4 +1,256 @@
 {
-  "success": false,
-  "message": "Catalogue has not been generated yet. Run python -m scraper.run in an environment with network access."
+  "started_at": "2026-10-18T09:44:57.874060+00:00",
+  "sources": {
+    "archive_index_entries": 217,
+    "archive_index_max_number": 217,
+    "official_records": 144,
+    "official_detail_fallback_records": 3,
+    "official_max_number": 243,
+    "official_rejected_records": [
+      {
+        "number": 239,
+        "title": "Die Weihnachtsgeiseln",
+        "source_url": "https://www.tkkg.de/produkte/hoerspiele",
+        "detail_panel_id": "detail54355",
+        "reason": "missing product title or excluded special product"
+      },
+      {
+        "number": 236,
+        "title": "Schatten aus der Unterwelt – das Live-Album",
+        "source_url": "https://www.tkkg.de/produkte/hoerspiele",
+        "detail_panel_id": "detail36439",
+        "reason": "missing product title or excluded special product"
+      },
+      {
+        "number": 239,
+        "title": "Die Weihnachtsgeiseln",
+        "source_url": "https://www.tkkg.de/produkte/hoerspiele?page=1",
+        "detail_panel_id": "detail54355",
+        "reason": "missing product title or excluded special product"
+      },
+      {
+        "number": 236,
+        "title": "Schatten aus der Unterwelt – das Live-Album",
+        "source_url": "https://www.tkkg.de/produkte/hoerspiele?page=1",
+        "detail_panel_id": "detail36439",
+        "reason": "missing product title or excluded special product"
+      },
+      {
+        "number": 221,
+        "title": "Schreckliche Weihnacht überall (Adventskalender)",
+        "source_url": "https://www.tkkg.de/produkte/hoerspiele?page=2",
+        "detail_panel_id": "detail26636",
+        "reason": "missing product title or excluded special product"
+      },
+      {
+        "number": 500,
+        "title": "Jede Legende hat Ihren Anfang (Hörspiel zum Kinofilm)",
+        "source_url": "https://www.tkkg.de/produkte/hoerspiele?page=2",
+        "detail_panel_id": "detail6590",
+        "reason": "missing product title or excluded special product"
+      },
+      {
+        "number": 209,
+        "title": "Das Geheimnis um TKKG (Neuaufnahme)",
+        "source_url": "https://www.tkkg.de/produkte/hoerspiele?page=2",
+        "detail_panel_id": "detail4707",
+        "reason": "missing product title or excluded special product"
+      },
+      {
+        "number": 208,
+        "title": "Adventskalender: Ein fast perfektes Weihnachtsmenü",
+        "source_url": "https://www.tkkg.de/produkte/hoerspiele?page=2",
+        "detail_panel_id": "detail3895",
+        "reason": "missing product title or excluded special product"
+      }
+    ],
+    "official_rejected_count": 8,
+    "archive_detail_records": 217
+  },
+  "warnings": [
+    "Conflicting titles detected for 16 episode number(s); first source value retained."
+  ],
+  "conflicts": [
+    {
+      "number": 105,
+      "existing_title": "Vermisste Kids und Killerpflanzen",
+      "incoming_title": "Vermißte Kids und Killerpflanzen",
+      "incoming_sources": [
+        {
+          "name": "Official TKKG catalogue",
+          "url": "https://www.tkkg.de/produkte/hoerspiele?page=8"
+        }
+      ]
+    },
+    {
+      "number": 110,
+      "existing_title": "Das Phantom im Schokoladen-Museum",
+      "incoming_title": "Das Phantom im Schokoladenmuseum",
+      "incoming_sources": [
+        {
+          "name": "Official TKKG catalogue",
+          "url": "https://www.tkkg.de/produkte/hoerspiele?page=7"
+        }
+      ]
+    },
+    {
+      "number": 133,
+      "existing_title": "Auf vier Pfoten zur Millionenbeute",
+      "incoming_title": "Auf Vier Pfoten zur Millionenbeute",
+      "incoming_sources": [
+        {
+          "name": "Official TKKG catalogue",
+          "url": "https://www.tkkg.de/produkte/hoerspiele?page=6"
+        }
+      ]
+    },
+    {
+      "number": 137,
+      "existing_title": "Verschleppt ins Tal Diabolo",
+      "incoming_title": "Verschleppt ins Tal Diablo",
+      "incoming_sources": [
+        {
+          "name": "Official TKKG catalogue",
+          "url": "https://www.tkkg.de/produkte/hoerspiele?page=6"
+        }
+      ]
+    },
+    {
+      "number": 150,
+      "existing_title": "Heiße Nächte im Dezember",
+      "incoming_title": "Heisse Nächte im Dezember",
+      "incoming_sources": [
+        {
+          "name": "Official TKKG catalogue",
+          "url": "https://www.tkkg.de/produkte/hoerspiele?page=5"
+        }
+      ]
+    },
+    {
+      "number": 189,
+      "existing_title": "Iwan, der Schreckliche",
+      "incoming_title": "Iwan,der Schreckliche",
+      "incoming_sources": [
+        {
+          "name": "Official TKKG catalogue",
+          "url": "https://www.tkkg.de/produkte/hoerspiele?page=3"
+        }
+      ]
+    },
+    {
+      "number": 207,
+      "existing_title": "TKKG zum Hören — Doppelte Entführung",
+      "incoming_title": "Doppelte Entführung",
+      "incoming_sources": [
+        {
+          "name": "Official TKKG catalogue",
+          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
+        }
+      ]
+    },
+    {
+      "number": 208,
+      "existing_title": "TKKG zum Hören — Geheimnis im Tresor",
+      "incoming_title": "Geheimnis im Tresor",
+      "incoming_sources": [
+        {
+          "name": "Official TKKG catalogue",
+          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
+        }
+      ]
+    },
+    {
+      "number": 209,
+      "existing_title": "TKKG zum Hören — Drohbriefe von Unbekannt",
+      "incoming_title": "Drohbriefe von Unbekannt",
+      "incoming_sources": [
+        {
+          "name": "Official TKKG catalogue",
+          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
+        }
+      ]
+    },
+    {
+      "number": 210,
+      "existing_title": "TKKG zum Hören — Raubzug im Casino",
+      "incoming_title": "Raubzug im Casino",
+      "incoming_sources": [
+        {
+          "name": "Official TKKG catalogue",
+          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
+        }
+      ]
+    },
+    {
+      "number": 211,
+      "existing_title": "TKKG zum Hören — Geiselnahme im Villenviertel",
+      "incoming_title": "Geiselnahme im Villenviertel",
+      "incoming_sources": [
+        {
+          "name": "Official TKKG catalogue",
+          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
+        }
+      ]
+    },
+    {
+      "number": 212,
+      "existing_title": "TKKG zum Hören — Tyrannei Kommando Eins",
+      "incoming_title": "Tyrannei Kommando Eins",
+      "incoming_sources": [
+        {
+          "name": "Official TKKG catalogue",
+          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
+        }
+      ]
+    },
+    {
+      "number": 213,
+      "existing_title": "TKKG zum Hören — Das unheimliche Dorf",
+      "incoming_title": "Das unheimliche Dorf",
+      "incoming_sources": [
+        {
+          "name": "Official TKKG catalogue",
+          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
+        }
+      ]
+    },
+    {
+      "number": 214,
+      "existing_title": "TKKG zum Hören — Diamantenrausch auf der A9",
+      "incoming_title": "Diamantenrausch auf der A9",
+      "incoming_sources": [
+        {
+          "name": "Official TKKG catalogue",
+          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
+        }
+      ]
+    },
+    {
+      "number": 215,
+      "existing_title": "TKKG zum Hören — Verbrechen im Moorsteiner Wald",
+      "incoming_title": "Verbrechen im Moorsteiner Wald",
+      "incoming_sources": [
+        {
+          "name": "Official TKKG catalogue",
+          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
+        }
+      ]
+    },
+    {
+      "number": 217,
+      "existing_title": "TKKG zum Hören — Tödliche Klarinette",
+      "incoming_title": "Tödliche Klarinette",
+      "incoming_sources": [
+        {
+          "name": "Official TKKG catalogue",
+          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
+        }
+      ]
+    }
+  ],
+  "gaps": [],
+  "episode_count": 243,
+  "validation_errors": [],
+  "success": true,
+  "finished_at": "2026-10-18T09:47:23.227394+00:00"
 }
