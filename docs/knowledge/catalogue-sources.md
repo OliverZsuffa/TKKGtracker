@@ -50,3 +50,10 @@ Use independent source adapters and saved HTML fixtures for tests. Store source 
 - The official universal page https://tkkg.lnk.to/alle-hoerspiele and the official playlists page are series-wide destinations, not per-episode links. Do not assign the generic URL to every episode as if it were a direct episode destination.
 - When parsing the official listing, associate each “Jetzt anhören” link only with the adjacent episode detail panel and stop at the next product teaser. Validate the destination as HTTPS on the exact tkkg.lnk.to hostname. Do not synthesize Linkfire aliases from episode numbers.
 - Service-specific searches (Spotify, Apple Music, Amazon Music, Deezer, YouTube Music, YouTube) may be offered as clearly labelled search shortcuts. They are not evidence that a particular release is available on that service.
+
+
+## Source precedence for merged cast and listening-link validation (18 October 2026)
+
+- The archive and official catalogue format cast lists differently: the archive may combine multiple character names for one performer, while the official page often lists separate character entries. Do not concatenate these lists. The archive is preferred for episodes with archive detail records; use the official cast only when the preferred record has no cast entries. This preserves the richer archive representation and avoids duplicate performers/roles.
+- DNS hostnames are case-insensitive. Official Linkfire URLs may be emitted with an uppercase hostname; normalize stored hostnames to lowercase and validate the schema without rejecting an otherwise valid destination.
+- The post-merge scrape report showed 34 official listening hubs and 34 schema failures caused by uppercase `TKKG.lnk.to` hostnames. Those failures prevented catalogue publication; they were validation failures, not evidence that the destinations were invalid.

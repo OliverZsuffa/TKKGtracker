@@ -144,6 +144,9 @@ def _official_listening_link(panel: Tag, source_url: str) -> list[dict]:
         destination = urljoin(source_url, href)
         parsed = urlparse(destination)
         if parsed.scheme == "https" and parsed.hostname == "tkkg.lnk.to" and parsed.path not in ("", "/alle-hoerspiele"):
+            # DNS hostnames are case-insensitive; store the canonical lowercase
+            # hostname so schema validation and downstream comparisons agree.
+            destination = parsed._replace(netloc=parsed.netloc.lower()).geturl()
             return [{
                 "service": "official",
                 "label": "Official listening page",

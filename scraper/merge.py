@@ -3,7 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 
 
-LIST_FIELDS = ("physical_releases", "tracks", "cast", "credits", "ratings", "sources", "listening_links")
+LIST_FIELDS = ("physical_releases", "tracks", "credits", "ratings", "sources", "listening_links")
 
 
 def merge_records(records: list[dict]) -> tuple[list[dict], list[dict]]:
@@ -42,6 +42,13 @@ def merge_records(records: list[dict]) -> tuple[list[dict], list[dict]]:
         for field in ("synopsis", "cover_url", "release_date", "release_year", "last_checked"):
             if current.get(field) in (None, "") and incoming.get(field) not in (None, ""):
                 current[field] = incoming[field]
+        # Cast lists are source-specific representations, not complementary
+        # fragments. Prefer the first non-empty source (archive records are
+        # deliberately passed before official records) to avoid duplicate actors
+        # and duplicate character credits from merging two independent lists.
+        if not current.get("cast") and incoming.get("cast"):
+            current["cast"] = deepcopy(incoming["cast"])
+
         for field in LIST_FIELDS:
             for item in incoming.get(field, []):
                 if item not in current[field]:
