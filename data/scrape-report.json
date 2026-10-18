@@ -1,5 +1,5 @@
 {
-  "started_at": "2026-10-18T09:44:57.874060+00:00",
+  "started_at": "2026-10-18T10:08:20.949556+00:00",
   "sources": {
     "archive_index_entries": 217,
     "archive_index_max_number": 217,
@@ -65,10 +65,29 @@
       }
     ],
     "official_rejected_count": 8,
-    "archive_detail_records": 217
+    "archive_detail_records": 206
   },
   "warnings": [
-    "Conflicting titles detected for 16 episode number(s); first source value retained."
+    {
+      "source": "audio.tkkg-site.de",
+      "numbers": [
+        207,
+        208,
+        209,
+        210,
+        211,
+        212,
+        213,
+        214,
+        215,
+        216,
+        217
+      ],
+      "stage": "robots",
+      "error": "Post fetching skipped because robots.txt access was previously denied with HTTP 403.",
+      "note": "These episodes are covered by the official catalogue. Access restrictions were not bypassed."
+    },
+    "Conflicting titles detected for 6 episode number(s); first source value retained."
   ],
   "conflicts": [
     {
@@ -136,121 +155,11 @@
           "url": "https://www.tkkg.de/produkte/hoerspiele?page=3"
         }
       ]
-    },
-    {
-      "number": 207,
-      "existing_title": "TKKG zum Hören — Doppelte Entführung",
-      "incoming_title": "Doppelte Entführung",
-      "incoming_sources": [
-        {
-          "name": "Official TKKG catalogue",
-          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
-        }
-      ]
-    },
-    {
-      "number": 208,
-      "existing_title": "TKKG zum Hören — Geheimnis im Tresor",
-      "incoming_title": "Geheimnis im Tresor",
-      "incoming_sources": [
-        {
-          "name": "Official TKKG catalogue",
-          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
-        }
-      ]
-    },
-    {
-      "number": 209,
-      "existing_title": "TKKG zum Hören — Drohbriefe von Unbekannt",
-      "incoming_title": "Drohbriefe von Unbekannt",
-      "incoming_sources": [
-        {
-          "name": "Official TKKG catalogue",
-          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
-        }
-      ]
-    },
-    {
-      "number": 210,
-      "existing_title": "TKKG zum Hören — Raubzug im Casino",
-      "incoming_title": "Raubzug im Casino",
-      "incoming_sources": [
-        {
-          "name": "Official TKKG catalogue",
-          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
-        }
-      ]
-    },
-    {
-      "number": 211,
-      "existing_title": "TKKG zum Hören — Geiselnahme im Villenviertel",
-      "incoming_title": "Geiselnahme im Villenviertel",
-      "incoming_sources": [
-        {
-          "name": "Official TKKG catalogue",
-          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
-        }
-      ]
-    },
-    {
-      "number": 212,
-      "existing_title": "TKKG zum Hören — Tyrannei Kommando Eins",
-      "incoming_title": "Tyrannei Kommando Eins",
-      "incoming_sources": [
-        {
-          "name": "Official TKKG catalogue",
-          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
-        }
-      ]
-    },
-    {
-      "number": 213,
-      "existing_title": "TKKG zum Hören — Das unheimliche Dorf",
-      "incoming_title": "Das unheimliche Dorf",
-      "incoming_sources": [
-        {
-          "name": "Official TKKG catalogue",
-          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
-        }
-      ]
-    },
-    {
-      "number": 214,
-      "existing_title": "TKKG zum Hören — Diamantenrausch auf der A9",
-      "incoming_title": "Diamantenrausch auf der A9",
-      "incoming_sources": [
-        {
-          "name": "Official TKKG catalogue",
-          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
-        }
-      ]
-    },
-    {
-      "number": 215,
-      "existing_title": "TKKG zum Hören — Verbrechen im Moorsteiner Wald",
-      "incoming_title": "Verbrechen im Moorsteiner Wald",
-      "incoming_sources": [
-        {
-          "name": "Official TKKG catalogue",
-          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
-        }
-      ]
-    },
-    {
-      "number": 217,
-      "existing_title": "TKKG zum Hören — Tödliche Klarinette",
-      "incoming_title": "Tödliche Klarinette",
-      "incoming_sources": [
-        {
-          "name": "Official TKKG catalogue",
-          "url": "https://www.tkkg.de/produkte/hoerspiele?page=2"
-        }
-      ]
     }
   ],
   "gaps": [],
   "episode_count": 243,
   "validation_errors": [],
   "success": true,
-  "finished_at": "2026-10-18T09:47:23.227394+00:00"
+  "finished_at": "2026-10-18T10:10:36.267549+00:00"
 }
