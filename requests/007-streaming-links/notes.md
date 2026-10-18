@@ -14,6 +14,7 @@ The playlist and universal links establish useful starting points, but they do n
 ## Implementation outcomes
 
 - Added optional listening_links catalogue metadata, JSON Schema validation, merge support, and CSV export.
+- Added a repeatable listening-link coverage summary to data/scrape-report.json, including episodes with/without links, counts by service/type, direct-vs-hub/fallback counts, and invalid destinations.
 - The official source adapter extracts only an episode-specific “Jetzt anhören” link hosted on tkkg.lnk.to; it does not fabricate aliases.
 - Added a “Listen on” section to episode details. Official hub links are shown separately from six platform search shortcuts; search availability is explicitly caveated.
 - Added frontend tests for official-link filtering and platform searches, plus scraper/schema/merge regression tests.
