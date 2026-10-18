@@ -165,7 +165,7 @@ def parse_official_page(client: SourceClient, page_number: int, diagnostics: lis
         if not title:
             title_match = re.search(r"Folge\s+\d+\s*:\s*(.+)$", alt, re.IGNORECASE)
             title = _clean(title_match.group(1)) if title_match else ""
-        excluded_terms = ("live-album", "live album", "hörspiel-box", "krimi-box", "hörspiel zum kinofilm")
+        excluded_terms = ("live-album", "live album", "hörspiel-box", "krimi-box", "hörspiel zum kinofilm", "adventskalender", "neuaufnahme", "die weihnachtsgeiseln")
         if not title or any(term in title.casefold() for term in excluded_terms):
             if diagnostics is not None:
                 diagnostics.append({
