@@ -1,4 +1,4 @@
-import type { ProgressMap } from "./types";
+import type { EpisodeProgress, ProgressMap } from "./types";
 
 const STORAGE_KEY = "tkkgtracker.progress.v1";
 const EXPORT_FORMAT = "tkkgtracker-progress/v1";
@@ -19,11 +19,32 @@ export function saveProgress(progress: ProgressMap): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
 }
 
+/**
+ * Remove entries that do not contain meaningful personal progress.
+ * This pure transformation never mutates the progress held in browser storage.
+ */
+export function cleanProgressForExport(progress: ProgressMap): ProgressMap {
+  const cleaned: ProgressMap = {};
+
+  for (const [episodeNumber, record] of Object.entries(progress)) {
+    const notes = typeof record.notes === "string" ? record.notes.trim() : "";
+    const hasRating = record.personalRating !== undefined && record.personalRating !== null;
+    if (!record.listened && !hasRating && !notes) continue;
+
+    const cleanedRecord: EpisodeProgress = { listened: record.listened };
+    if (hasRating) cleanedRecord.personalRating = record.personalRating;
+    if (notes) cleanedRecord.notes = record.notes;
+    cleaned[episodeNumber] = cleanedRecord;
+  }
+
+  return cleaned;
+}
+
 export function exportProgress(progress: ProgressMap): void {
   const payload = {
     format: EXPORT_FORMAT,
     exportedAt: new Date().toISOString(),
-    progress,
+    progress: cleanProgressForExport(progress),
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
