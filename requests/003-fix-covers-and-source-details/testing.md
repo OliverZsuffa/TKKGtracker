@@ -1,6 +1,6 @@
 # Testing: Fix covers and source detail quality
 
-**Status:** Planned only. Record actual results after implementation is approved.
+**Status:** Implementation started. Automated checks and live diagnostics are pending; do not treat planned checks as passed.
 
 ## Automated tests
 1. Run the focused archive source tests.
