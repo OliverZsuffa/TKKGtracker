@@ -183,7 +183,7 @@ def _release_metadata(soup: BeautifulSoup) -> dict[str, str]:
                 values = [_clean(line) for line in sibling.get_text("\n", strip=True).splitlines()]
                 values = [value for value in values if value]
                 if len(values) >= len(label_nodes) and not any(value.casefold() in {f"{label.casefold()}:" for label in labels} for value in values):
-                    return {label: values[index] for index, label in enumerate(labels) if index < len(values)}
+                    return {label: values[index] for index, label in enumerate(label_nodes) if index < len(values)}
 
     # Other pages (and small fixture pages) use adjacent label/value elements.
     result: dict[str, str] = {}
