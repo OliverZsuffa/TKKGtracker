@@ -21,3 +21,11 @@
 ## Extraction strategy
 
 Use independent source adapters and saved HTML fixtures for tests. Store source URLs and retrieval timestamps with each record. Treat numbering gaps and conflicting titles as review warnings unless a documented rule establishes that a record is invalid.
+
+## Verified live-fetch findings (18 October 2026)
+
+- The historical archive index lists episodes 1–206 at https://www.tkkg-site.de/de/hoeren/hoerspiele/serie.html. Some index hrefs are directory-relative without a leading slash (de/hoeren/...). Resolve them against the origin root or normalize the duplicated /de/hoeren/hoerspiele/ prefix; do not change the audio.tkkg-site.de host for episodes 207–217.
+- The official listing's episode detail data is already embedded in the initial HTML inside collapsed div elements with IDs such as detail57142. The adjacent teaser contains the title and cover, and its arrow link uses data-modal="#detail57142". Pair the detail panel with that sibling teaser. No browser automation or guessed XHR endpoint is needed for the fields inspected.
+- The listing currently omits main-series episodes 222, 223, and 234 even though verified official detail pages exist: https://www.tkkg.de/produkte/details/roter-drache-222, https://www.tkkg.de/produkte/details/betruger-super-sauber, and https://www.tkkg.de/produkte/details/im-auftrag-des-bosen. These are explicit supplemental sources and should be fetched only when the listing has no record for the number. Keep the catalogue completeness guard enabled if a fallback fails.
+- The official listing also includes "Jede Legende hat Ihren Anfang (Hörspiel zum Kinofilm)" labelled as episode 500. Its title identifies it as a film tie-in, not a regular main-series episode. Exclude it by the product title evidence, not by an arbitrary maximum episode number.
+- During the 18 October live test, the archive adapter fetched all 217 index entries and parsed all 217 archive records without fetch warnings. The corrected official parser extracted listing data and correctly identified the special episode 500; the remaining test was to add the three verified detail-page fallbacks and rerun completeness validation.
