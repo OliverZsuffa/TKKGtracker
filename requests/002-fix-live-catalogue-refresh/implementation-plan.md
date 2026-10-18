@@ -1,6 +1,6 @@
 # Implementation plan: Diagnose and fix live TKKG catalogue fetching
 
-**Status:** Revised plan, awaiting Oliver's approval
+**Status:** Approved 18 October 2026; implementation and live verification in progress
 
 ## Goal
 
@@ -123,6 +123,6 @@ Choose the extraction strategy only after the investigation:
 - Open the deployed app and confirm the episode list is populated, search works by title and number, and listening progress persists after reload.
 - Record actual observations in `testing.md` and implementation outcomes in `notes.md`. Update reusable knowledge only with durable findings that were actually verified.
 
-## Approval gate
+## Approval
 
-This plan revises Request 002 to investigate both the historical archive fetch failures and the official site's dynamic product details. No scraper or workflow code changes will be made until Oliver explicitly approves this revised plan.
+Oliver approved this revised plan on 18 October 2026. Implementation is underway on the dedicated Request 002 branch. The incomplete-catalogue guard remains enabled, and the branch-only live diagnostic does not publish or deploy generated data.
