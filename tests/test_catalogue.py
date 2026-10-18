@@ -60,6 +60,30 @@ class CatalogueTests(unittest.TestCase):
         self.assertEqual(len(merged[0]["cast"]), 1)
         self.assertEqual(len(merged[0]["sources"]), 2)
 
+    def test_release_metadata_field_labels_are_rejected(self):
+        malformed = episode(1, "Test Folge", physical_releases=[{
+            "medium": "Label:",
+            "label": "Erscheinungstermin:",
+            "ean": "LP / MC / CD",
+            "release_date": "EAN:",
+            "source_url": "https://example.com/episode",
+        }])
+        errors = validate_catalogue([malformed])
+        self.assertTrue(any("medium contains a field label" in error for error in errors))
+        self.assertTrue(any("label contains a field label" in error for error in errors))
+        self.assertTrue(any("release_date contains a field label" in error for error in errors))
+        self.assertTrue(any("EAN contains no plausible" in error for error in errors))
+
+    def test_release_metadata_accepts_realistic_archive_values(self):
+        valid = episode(1, "Test Folge", physical_releases=[{
+            "medium": "LP / MC / CD",
+            "label": "EUROPA",
+            "ean": "743219895943 (MC) / 743219895929 (CD)",
+            "release_date": "1981 (LP / MC) / 12. Mai 2003 (CD)",
+            "source_url": "https://example.com/episode",
+        }], release_year=1981)
+        self.assertEqual(validate_catalogue([valid]), [])
+
     def test_title_conflicts_are_reported(self):
         merged, conflicts = merge_records([episode(1, "A"), episode(1, "Different")])
         self.assertEqual(merged[0]["title"], "A")
