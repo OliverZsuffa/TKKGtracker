@@ -17,7 +17,7 @@ def parse_tumblr_episode(client: SourceClient, discovered: dict) -> dict:
     heading = soup.find(["h1", "h2"], string=re.compile(r"Folge\s*\d+", re.IGNORECASE))
     if heading is None:
         heading = next((h for h in soup.find_all(["h1", "h2"]) if re.search(r"Folge\s*\d+", _clean(h.get_text(" ", strip=True)), re.IGNORECASE)), None)
-    title = discovered["title"]
+    title = re.sub(r"^TKKG zum Hören\s*[—–-]\s*", "", _clean(discovered["title"]), flags=re.IGNORECASE)
     if heading:
         match = re.search(r"(.+?)\s*\(Folge\s*0*(\d+)\)", _clean(heading.get_text(" ", strip=True)), re.IGNORECASE)
         if match:
