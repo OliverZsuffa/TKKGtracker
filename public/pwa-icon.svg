@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#17201d"/>
+  <circle cx="256" cy="228" r="158" fill="#263c32" stroke="#86b49b" stroke-width="10"/>
+  <path d="M143 137h48v99l72-99h57l-78 103 84 111h-59l-58-79-18 23v56h-48z" fill="#f0f3e9"/>
+  <path d="M307 142h61v34h-61zm0 54h61v34h-61zm0 54h61v34h-61z" fill="#9bd0ad"/>
+  <text x="256" y="438" text-anchor="middle" font-family="Arial, sans-serif" font-size="47" font-weight="700" letter-spacing="5" fill="#f0f3e9">TKKG</text>
+</svg>
