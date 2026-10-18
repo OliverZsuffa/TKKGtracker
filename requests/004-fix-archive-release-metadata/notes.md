@@ -16,4 +16,15 @@ Initial programmatic inspection of the current generated JSON:
 - The parser's current output needs source-by-source verification; do not assume every episode actually has an EAN or release date.
 
 ## Implementation and test outcomes
-Pending approval. No source code, generated catalogue data, or deployment has been changed for this request.
+
+### Implementation changes made on the request branch
+- Replaced the flattened-text regular expressions with a structural release-field extractor that supports parallel label/value columns and adjacent label/value elements.
+- Added regression tests for the live episode 001 values, parallel columns, and partial metadata where the date field is absent.
+- Added catalogue quality validation that rejects label strings used as field values and EAN fields without a plausible 8–14 digit identifier.
+- Corrected an initially over-escaped digit regex during code review.
+- No generated catalogue data has been published and no deployment has been triggered by this branch.
+
+### Pending
+- Run branch CI and refine any failing cases.
+- Run the full catalogue refresh only after tests pass; audit all 206 archive records and representative episodes.
+- Confirm production data and deployment after approved validation.
