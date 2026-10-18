@@ -249,7 +249,7 @@
           "url": {
             "type": "string",
             "format": "uri",
-            "pattern": "^https://tkkg\\.lnk\\.to/[^\\s]+$"
+            "pattern": "(?i)^https://tkkg\\.lnk\\.to/[^\\s]+$"
           },
           "link_type": {
             "const": "official_hub"
