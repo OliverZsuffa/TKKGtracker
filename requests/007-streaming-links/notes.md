@@ -1,6 +1,6 @@
 # Implementation notes: Episode streaming links
 
-**Status:** Implementation in progress on the approved request branch; automated CI not yet verified.
+**Status:** Implemented on PR #7; automated GitHub Actions checks passed on code commit `6af76e9a79db9bcfa72b9821435a652c1d3a8b7a`. Not merged or deployed.
 
 ## Initial research
 
@@ -21,8 +21,8 @@ The playlist and universal links establish useful starting points, but they do n
 
 ## Automated checks
 
-Not run locally because this environment has no GitHub network access. GitHub Actions results are pending.\n
-- First PR CI run: frontend checks passed (npm install, audit, typecheck, tests, build). Python suite identified that the listening-link fixture places the link inside the detail panel; parser was adjusted to inspect links inside the panel and then adjacent siblings. A fresh run on the updated head is pending.
+Local commands were unavailable because this environment has no GitHub network access. GitHub Actions passed on commit `6af76e9a79db9bcfa72b9821435a652c1d3a8b7a`: Python unit tests; `npm install`; `npm audit --audit-level=high`; `npm run typecheck`; `npm test`; and `npm run build`.\n
+- First PR CI run: frontend checks passed (npm install, audit, typecheck, tests, build). Python suite identified that the listening-link fixture places the link inside the detail panel; parser was adjusted to inspect links inside the panel and then adjacent siblings. The fresh run on the corrected implementation passed the Python suite.
 
 
 ## Questions for the research phase
@@ -31,3 +31,8 @@ Not run locally because this environment has no GitHub network access. GitHub Ac
 - Do older and newer episodes use the same link format?
 - Which services have verified direct episode/release links?
 - Should platform-specific search destinations be included as labelled fallbacks, or should the initial release show only verified direct/official destinations?
+
+## Manual verification outstanding
+
+- The live browser, mobile layout, and keyboard-only checks have not been performed in this environment.
+- The live catalogue refresh and deployment have not run because the PR is still open.
