@@ -12,6 +12,14 @@ export interface PhysicalRelease {
   source_url: string;
 }
 
+export interface ListeningLink {
+  service: "official";
+  label: string;
+  url: string;
+  link_type: "official_hub";
+  source_url: string;
+}
+
 export interface Episode {
   number: number;
   title: string;
@@ -25,6 +33,7 @@ export interface Episode {
   cast: { name: string; character?: string | null }[];
   credits: { role: string; name: string }[];
   ratings: { source: string; category: string; value: string | number; review_count?: number | null }[];
+  listening_links?: ListeningLink[];
   sources: SourceReference[];
   last_checked: string | null;
 }
