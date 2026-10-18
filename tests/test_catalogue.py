@@ -20,6 +20,7 @@ def episode(number: int, title: str, **extra) -> dict:
         "cast": [],
         "credits": [],
         "ratings": [],
+        "listening_links": [],
         "sources": [{"name": "test", "url": "https://example.com/episode", "retrieved_at": "2026-10-18T00:00:00+00:00"}],
         "last_checked": "2026-10-18T00:00:00+00:00",
     }
