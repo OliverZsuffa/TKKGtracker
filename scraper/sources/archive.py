@@ -146,6 +146,87 @@ def _image_candidates(soup: BeautifulSoup, episode_number: int, page_url: str) -
 
 
 
+def _release_metadata(soup: BeautifulSoup) -> dict[str, str]:
+    """Associate release labels with values in either paired or two-column markup."""
+    labels = ("Medium", "Label", "Erscheinungstermin", "EAN")
+    label_nodes: dict[str, Tag] = {}
+    for label in labels:
+        for text_node in soup.find_all(string=True):
+            if _clean(str(text_node)).casefold() == f"{label}:".casefold():
+                label_nodes[label] = text_node.parent
+                break
+    if not label_nodes:
+        return {}
+
+    # Some archive pages render labels in one column and values in a parallel
+    # column. Search upward until the labels share one direct-child column.
+    first_node = next(iter(label_nodes.values()))
+    first_chain = [first_node, *first_node.parents]
+    for common_ancestor in first_chain:
+        if not all(any(parent is common_ancestor for parent in node.parents) for node in label_nodes.values()):
+            continue
+        child_paths = {}
+        for label, node in label_nodes.items():
+            child = node
+            while child.parent is not common_ancestor and child.parent is not None:
+                child = child.parent
+            child_paths[label] = child
+        if len(set(map(id, child_paths.values()))) != 1:
+            continue
+        label_column = next(iter(child_paths.values()))
+        for sibling in common_ancestor.find_all(recursive=False):
+            if sibling is label_column:
+                continue
+            values = [_clean(line) for line in sibling.get_text("\n", strip=True).splitlines()]
+            values = [value for value in values if value]
+            label_texts = {label.casefold() + ":" for label in labels}
+            if len(values) >= len(label_nodes) and not any(value.casefold() in label_texts for value in values):
+                return {label: values[index] for index, label in enumerate(label_nodes) if index < len(values)}
+
+    # Some layouts place all labels first and all values immediately after them
+    # inside one shared container. Preserve label order even when a label is absent.
+    nodes = list(label_nodes.values())
+    parents = [node.parent for node in nodes]
+    if parents and all(parent is parents[0] for parent in parents) and isinstance(parents[0], Tag):
+        siblings = parents[0].find_all(recursive=False)
+        positions = [siblings.index(node) for node in nodes if node in siblings]
+        if len(positions) == len(nodes) and positions == list(range(min(positions), min(positions) + len(positions))):
+            values = [
+                _clean(item.get_text(" ", strip=True))
+                for item in siblings[max(positions) + 1:]
+                if _clean(item.get_text(" ", strip=True))
+            ]
+            if len(values) >= len(label_nodes):
+                return {label: values[index] for index, label in enumerate(label_nodes)}
+
+    # Other pages (and small fixture pages) use adjacent label/value elements.
+    result: dict[str, str] = {}
+    for label, node in label_nodes.items():
+        sibling = node.next_sibling
+        while sibling is not None:
+            if isinstance(sibling, Tag):
+                value = _clean(sibling.get_text(" ", strip=True))
+            else:
+                value = _clean(str(sibling))
+            if value:
+                if value.casefold() not in {f"{item.casefold()}:" for item in labels}:
+                    result[label] = value
+                break
+            sibling = sibling.next_sibling
+        if label not in result:
+            parent = node.parent
+            if isinstance(parent, Tag):
+                sibling = parent.next_sibling
+                while sibling is not None:
+                    value = _clean(sibling.get_text(" ", strip=True)) if isinstance(sibling, Tag) else _clean(str(sibling))
+                    if value:
+                        if value.casefold() not in {f"{item.casefold()}:" for item in labels}:
+                            result[label] = value
+                        break
+                    sibling = sibling.next_sibling
+    return result
+
+
 def parse_archive_episode(client: SourceClient, discovered: dict) -> dict:
     soup = client.get_html(discovered["source_url"])
     heading = soup.find(["h1", "h2"])
@@ -173,20 +254,19 @@ def parse_archive_episode(client: SourceClient, discovered: dict) -> dict:
         record["cover_url"] = candidates[0]
 
     body_text = soup.get_text("\n", strip=True)
-    medium = re.search(r"Medium:\s*\n([^\n]+)", body_text, re.IGNORECASE)
-    label = re.search(r"Label:\s*\n([^\n]+)", body_text, re.IGNORECASE)
-    release = re.search(r"Erscheinungstermin:\s*\n([^\n]+)", body_text, re.IGNORECASE)
-    ean = re.search(r"EAN:\s*\n([^\n]+)", body_text, re.IGNORECASE)
+    release_fields = _release_metadata(soup)
     physical = {}
-    if medium:
-        physical["medium"] = _clean(medium.group(1))
-    if label:
-        physical["label"] = _clean(label.group(1))
-    if ean:
-        physical["ean"] = _clean(ean.group(1))
-    if release:
-        release_text = _clean(release.group(1))
-        physical["release_date"] = release_text
+    for source_label, field_name in (
+        ("Medium", "medium"),
+        ("Label", "label"),
+        ("EAN", "ean"),
+        ("Erscheinungstermin", "release_date"),
+    ):
+        value = _clean(release_fields.get(source_label, ""))
+        if value and value.casefold() not in {"medium:", "label:", "ean:", "erscheinungstermin:"}:
+            physical[field_name] = value
+    release_text = physical.get("release_date")
+    if release_text:
         year_match = re.search(r"\b(19|20)\d{2}\b", release_text)
         if year_match:
             record["release_year"] = int(year_match.group(0))

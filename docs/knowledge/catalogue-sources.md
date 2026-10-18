@@ -32,3 +32,12 @@ Use independent source adapters and saved HTML fixtures for tests. Store source 
 - The CSV schema must include the series field because the JSON schema requires it; otherwise the live refresh can validate JSON and still fail while writing CSV.
 - The official catalogue listing omits episodes 222, 223, and 234, but their verified individual product pages are available. Fetch those explicit URLs only when the listing has no record for the number.
 - The 18 October live diagnostic succeeded with 243 unique records numbered 1–243, no gaps, and no schema errors. It fetched 206 archive detail pages and used 3 official detail-page fallbacks. Eleven audio-subdomain posts were skipped due to HTTP 403 on robots.txt; the official catalogue covers their episode metadata. JSON and CSV both contain 243 rows. The branch diagnostic uploads artifacts only and does not commit or deploy generated data.
+
+
+## Archive release metadata markup (verified 18 October 2026)
+
+- Live episode 001 and 002 pages expose the release fields in this order: Medium, Label, Erscheinungstermin, EAN. The values appear in the same order after the labels in the page's rendered text.
+- Episode 001 displays medium `LP / MC / CD`, label `EUROPA`, release information `1981 (LP / MC) / 12. Mai 2003 (CD)`, and EANs `743219895943 (MC) / 743219895929 (CD)`. Episode 002 uses the same layout and gives its own release information and EANs.
+- Do not parse these fields by matching each label to the next line in flattened page text. Associate the label and value columns/blocks structurally and preserve their order. Do not assume every episode has every field.
+- A release entry can describe multiple media editions and dates. Preserve the archive's full release text in the physical-release record. The top-level `release_year` may use a year explicitly present in that text; the top-level `release_date` remains null unless a single complete date can be represented without ambiguity.
+- Catalogue validation should reject field labels stored as values and an EAN field that contains no plausible digit identifier. This is intended to prevent malformed extraction from publishing even when it passes the JSON schema.
