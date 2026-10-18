@@ -25,12 +25,6 @@ def validate_catalogue(episodes: list[dict], schema_path: Path | None = None) ->
                 errors.append(f"duplicate episode number {number}: {seen[number]!r} and {title!r}")
             else:
                 seen[number] = str(title)
-    numbers = sorted(seen)
-    if numbers:
-        missing = sorted(set(range(numbers[0], numbers[-1] + 1)) - set(numbers))
-        if missing:
-            # Gaps are reported separately by the scraper and do not automatically fail schema validation.
-            pass
     return errors
 
 
@@ -38,4 +32,4 @@ def find_number_gaps(episodes: list[dict]) -> list[int]:
     numbers = sorted({episode["number"] for episode in episodes if isinstance(episode.get("number"), int)})
     if not numbers:
         return []
-    return sorted(set(range(numbers[0], numbers[-1] + 1)) - set(numbers))
+    return sorted(set(range(1, numbers[-1] + 1)) - set(numbers))
