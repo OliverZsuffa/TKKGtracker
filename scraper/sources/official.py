@@ -126,31 +126,32 @@ def _parse_credits(panel: Tag | BeautifulSoup) -> list[dict]:
 
 
 def _official_listening_link(panel: Tag, source_url: str) -> list[dict]:
-    """Extract the episode-specific Linkfire destination immediately after its detail panel."""
+    """Extract the episode-specific Linkfire destination from this card only."""
+    candidates = list(panel.find_all("a"))
     for sibling in panel.next_siblings:
         if not isinstance(sibling, Tag):
             continue
         # The next product teaser marks the end of this episode's card.
         if sibling.name == "div" and sibling.find("img") and sibling.find(["h2", "h3"]):
             break
-        anchors = [sibling] if sibling.name == "a" else sibling.find_all("a")
-        for anchor in anchors:
-            label = _clean(anchor.get_text(" ", strip=True)).casefold()
-            href = anchor.get("href")
-            if label != "jetzt anhören" or not isinstance(href, str):
-                continue
-            destination = urljoin(source_url, href)
-            parsed = urlparse(destination)
-            if parsed.scheme == "https" and parsed.hostname == "tkkg.lnk.to" and parsed.path not in ("", "/alle-hoerspiele"):
-                return [{
-                    "service": "official",
-                    "label": "Official listening page",
-                    "url": destination,
-                    "link_type": "official_hub",
-                    "source_url": source_url,
-                }]
-    return []
+        candidates.extend([sibling] if sibling.name == "a" else sibling.find_all("a"))
 
+    for anchor in candidates:
+        label = _clean(anchor.get_text(" ", strip=True)).casefold()
+        href = anchor.get("href")
+        if label != "jetzt anhören" or not isinstance(href, str):
+            continue
+        destination = urljoin(source_url, href)
+        parsed = urlparse(destination)
+        if parsed.scheme == "https" and parsed.hostname == "tkkg.lnk.to" and parsed.path not in ("", "/alle-hoerspiele"):
+            return [{
+                "service": "official",
+                "label": "Official listening page",
+                "url": destination,
+                "link_type": "official_hub",
+                "source_url": source_url,
+            }]
+    return []
 
 def parse_official_page(client: SourceClient, page_number: int, diagnostics: list[dict] | None = None) -> list[dict]:
     url = BASE_URL if page_number == 0 else f"{BASE_URL}?page={page_number}"
