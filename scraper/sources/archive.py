@@ -40,21 +40,24 @@ def discover_archive_episodes(client: SourceClient) -> list[dict]:
     return sorted(records.values(), key=lambda item: item["number"])
 
 
-def _section_text(soup: BeautifulSoup, heading_text: str) -> str | None:
+def _section_lines(soup: BeautifulSoup, heading_text: str) -> list[str]:
     target = next((h for h in soup.find_all(list(HEADING_TAGS)) if _clean(h.get_text(" ", strip=True)).casefold() == heading_text.casefold()), None)
     if target is None:
-        return None
-    chunks: list[str] = []
+        return []
+    lines: list[str] = []
     for sibling in target.next_siblings:
         if isinstance(sibling, Tag) and sibling.name in HEADING_TAGS:
             break
         if isinstance(sibling, Tag):
-            text = _clean(sibling.get_text(" ", strip=True))
-            if text:
-                chunks.append(text)
+            value = sibling.get_text("\n", strip=True)
+            lines.extend(_clean(line) for line in value.splitlines() if _clean(line))
         elif str(sibling).strip():
-            chunks.append(_clean(str(sibling)))
-    result = _clean(" ".join(chunks))
+            lines.append(_clean(str(sibling)))
+    return lines
+
+
+def _section_text(soup: BeautifulSoup, heading_text: str) -> str | None:
+    result = _clean(" ".join(_section_lines(soup, heading_text)))
     return result or None
 
 
@@ -141,13 +144,10 @@ def parse_archive_episode(client: SourceClient, discovered: dict) -> dict:
                 character = character_text or None
             record["cast"].append({"name": name, "character": character})
 
-    production_text = _section_text(soup, "Produktion")
-    if production_text:
-        for line in re.split(r"\s{2,}|(?<=[.!])\s+(?=[A-ZÄÖÜ])", production_text):
-            line = _clean(line)
-            match = re.match(r"([^:]{2,60}):\s*(.+)", line)
-            if match:
-                record["credits"].append({"role": _clean(match.group(1)), "name": _clean(match.group(2))})
+    for line in _section_lines(soup, "Produktion"):
+        match = re.match(r"([^:]{2,60}):\s*(.+)", line)
+        if match:
+            record["credits"].append({"role": _clean(match.group(1)), "name": _clean(match.group(2))})
 
     ratings_match = re.search(r"Durchschnitts-\s*bewertungen:(.*?)(?:Rang\s*#?(\d+))?", body_text, re.IGNORECASE | re.DOTALL)
     if ratings_match:
