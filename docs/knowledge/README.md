@@ -4,6 +4,7 @@ Store concise, reusable facts that help with multiple requests.
 
 ## Topics
 - [Catalogue source findings](catalogue-sources.md) — verified source coverage, extraction fields, and known catalogue inconsistencies.
+- [Browser progress storage](progress-storage.md) — local progress storage and export cleanup rules.
 
 ## What belongs here?
 - Architecture and how important components fit together.
