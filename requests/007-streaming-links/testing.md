@@ -29,5 +29,7 @@
 
 ## Actual results
 
-- Automated GitHub Actions checks: pending.
-- Manual browser, mobile, and keyboard checks: not yet performed.
+- [x] Python unit tests passed in GitHub Actions on implementation commit `6af76e9a79db9bcfa72b9821435a652c1d3a8b7a`.
+- [x] `npm audit --audit-level=high`, `npm run typecheck`, `npm test`, and `npm run build` passed in GitHub Actions on that commit.
+- [ ] Manual browser, mobile, and keyboard checks: not yet performed.
+- [ ] Live catalogue refresh/coverage report and deployed-site verification: pending merge and deployment.
