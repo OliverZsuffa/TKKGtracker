@@ -1,6 +1,6 @@
 # Implementation plan: Fix covers and source detail quality
 
-**Status:** Awaiting explicit approval. Investigation and documentation only so far.
+**Status:** Approved by Oliver on 18 October 2026. Implementation and verification in progress.
 
 ## Goal
 Correct archive cover discovery, prevent invalid Tumblr/embed content from contaminating episode records 207–217, and improve official source links only where the site's real navigation supports it.
