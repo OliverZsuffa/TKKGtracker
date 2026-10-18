@@ -1,6 +1,10 @@
 name: Update episode catalogue
 
 on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "data/**"
   workflow_dispatch:
   schedule:
     - cron: "23 5 * * 1"
