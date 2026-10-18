@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import episodesData from "../data/episodes.json";
 import type { Episode, EpisodeProgress, ProgressMap } from "./types";
@@ -7,8 +7,8 @@ import { activeSearchLabels, filterEpisodes, getSearchOptions, initialSearchStat
 import type { MissingField, SearchState, SortMode } from "./search";
 import { createGapReport, downloadText, formatGapReportMarkdown } from "./gapReport";
 import { getListeningOptions } from "./listeningLinks";
+import { fetchCatalogue } from "./catalogue";
 
-const episodes = episodesData as Episode[];
 type Filter = "all" | "unlistened" | "listened";
 
 function StarRating({ value, onChange }: { value?: number; onChange: (value: number | undefined) => void }) {
@@ -22,6 +22,14 @@ function StarRating({ value, onChange }: { value?: number; onChange: (value: num
 }
 
 export default function App() {
+  const [episodes, setEpisodes] = useState<Episode[]>(() => episodesData as Episode[]);
+  useEffect(() => {
+    let cancelled = false;
+    void fetchCatalogue(episodesData as Episode[], import.meta.env.BASE_URL).then((catalogue) => {
+      if (!cancelled) setEpisodes(catalogue);
+    });
+    return () => { cancelled = true; };
+  }, []);
   const [progress, setProgress] = useState<ProgressMap>(() => loadProgress());
   const [search, setSearch] = useState<SearchState>(initialSearchState);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -36,8 +44,8 @@ export default function App() {
 
   const listenedCount = episodes.filter((episode) => progress[String(episode.number)]?.listened).length;
   const percentage = episodes.length ? Math.round((listenedCount / episodes.length) * 100) : 0;
-  const options = useMemo(() => getSearchOptions(episodes), []);
-  const visibleEpisodes = useMemo(() => filterEpisodes(episodes, { ...search, listening: filter }, progress), [search, filter, progress]);
+  const options = useMemo(() => getSearchOptions(episodes), [episodes]);
+  const visibleEpisodes = useMemo(() => filterEpisodes(episodes, { ...search, listening: filter }, progress), [episodes, search, filter, progress]);
   const selectedEpisode = selected === null ? null : episodes.find((episode) => episode.number === selected) ?? null;
   const activeLabels = activeSearchLabels({ ...search, listening: filter });
   const reportTarget = selectedEpisode ?? (visibleEpisodes.length === 1 ? visibleEpisodes[0] : null);

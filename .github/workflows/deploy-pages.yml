@@ -1,6 +1,14 @@
 name: Deploy TKKGTracker
 
 on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "data/**"
+      - "requests/**"
+      - "docs/**"
+      - "README.md"
+      - ".github/copilot-instructions.md"
   workflow_dispatch:
   workflow_run:
     workflows: ["Update episode catalogue"]
@@ -30,6 +38,8 @@ jobs:
       - run: npm audit --audit-level=high
       - run: npm run typecheck
       - run: npm test
+      - name: Include generated catalogue as a runtime resource
+        run: mkdir -p public/data && cp data/episodes.json public/data/episodes.json
       - run: npm run build
       - uses: actions/upload-pages-artifact@v4
         with:
