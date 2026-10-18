@@ -32,6 +32,14 @@ jobs:
         run: python -m scraper.run
       - name: Validate output
         run: python -m unittest discover -s tests -v
+      - name: Preserve scrape report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tkkg-scrape-report
+          path: data/scrape-report.json
+          if-no-files-found: warn
+          retention-days: 30
       - name: Commit updated catalogue
         run: |
           git config user.name "github-actions[bot]"
