@@ -1,6 +1,6 @@
 # Testing: Fix archive release metadata extraction
 
-**Status:** Planned only. No implementation checks have been run for this request.
+**Status:** Parser and regression tests updated on the request branch. Automated CI results are pending; do not treat checks as passed yet.
 
 ## Automated tests
 1. Add and run focused archive parser tests for episode 001's observed release metadata markup.
