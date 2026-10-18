@@ -232,8 +232,8 @@ class SourceParserTests(unittest.TestCase):
         url = "https://www.tkkg.de/produkte/hoerspiele"
         html = official_product(243, "Die Fährte des Hehlers", "Ein Fall mit einem Hehler.")
         html = html.replace(
-            "      </div>\\n    ",
-            '      <a href="https://tkkg.lnk.to/-243AW">Jetzt anhören</a>\\n      </div>\\n    ',
+            "      </div>\n    ",
+            '      <a href="https://tkkg.lnk.to/-243AW">Jetzt anhören</a>\n      </div>\n    ',
             1,
         )
         client = FakeClient({url: html})
