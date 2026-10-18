@@ -2,6 +2,12 @@
 
 Record actual observations after the implementation is deployed. Do not mark a test as passed without performing it.
 
+## Automated checks
+
+- [ ] GitHub Actions frontend checks pass: dependency audit, typecheck, unit tests, production build.
+- [ ] Confirm the build contains `manifest.webmanifest`, `service-worker.js`, the icon, and `data/episodes.json` under the GitHub Pages base path.
+- [ ] Confirm the catalogue-refresh workflow retains its weekly schedule and successful refresh still triggers deployment.
+
 ## Android installation
 
 - [ ] Open the deployed TKKGTracker site in Chrome on Android over HTTPS.
@@ -15,16 +21,16 @@ Record actual observations after the implementation is deployed. Do not mark a t
 - [ ] Mark an episode listened to, add a rating, and add a note.
 - [ ] Close and reopen the installed app; confirm all three remain.
 - [ ] Export progress and confirm the existing JSON format is unchanged.
-- [ ] If useful, import a previously exported file and confirm progress is restored correctly.
+- [ ] Import a previously exported file and confirm progress is restored correctly.
 
 ## Catalogue and offline behaviour
 
-- [ ] While online, load the catalogue successfully.
-- [ ] Confirm a deployed app update is eventually picked up without reinstalling.
+- [ ] While online, load the catalogue and confirm the expected episode count/search behaviour.
+- [ ] Confirm a deployed catalogue update is picked up without reinstalling.
 - [ ] After a successful online load, enable airplane mode and relaunch the app.
 - [ ] Confirm the app shell and cached catalogue remain usable offline.
 - [ ] Restore connectivity and confirm the catalogue can refresh again.
-- [ ] Confirm external streaming links are understood to require their own network access.
+- [ ] Confirm external streaming links still require their own network access.
 
 ## Results
 
