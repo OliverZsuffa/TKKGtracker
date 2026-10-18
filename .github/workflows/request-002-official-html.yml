@@ -1,0 +1,63 @@
+name: Request 002 official catalogue HTML inspection
+
+on:
+  push:
+    branches:
+      - request/002-fix-live-catalogue-refresh
+    paths:
+      - ".github/workflows/request-002-official-html.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Fetch permitted public HTML and summarize card structure
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from scraper.http import SourceClient
+          from bs4 import Tag
+
+          url = "https://www.tkkg.de/produkte/hoerspiele"
+          soup = SourceClient().get_html(url)
+          Path("data").mkdir(exist_ok=True)
+          Path("data/official-page-debug.html").write_text(str(soup), encoding="utf-8")
+          print(f"Fetched {len(str(soup))} characters from {url}")
+          printed = 0
+          for heading in soup.find_all(["h4", "h5", "h6"]):
+              label = " ".join(heading.get_text(" ", strip=True).split())
+              if "TKKG Hörspiel-Folge" not in label:
+                  continue
+              print(f"\nHEADING: {label}")
+              for depth, parent in enumerate(list(heading.parents)[:8], start=1):
+                  if not isinstance(parent, Tag):
+                      continue
+                  classes = parent.get("class", [])
+                  print(
+                      f"  ancestor[{depth}] tag={parent.name} class={classes!r} "
+                      f"h4_count={len(parent.find_all('h4'))} "
+                      f"has_img={parent.find('img') is not None}"
+                  )
+              printed += 1
+              if printed >= 3:
+                  break
+          print(f"Sampled {printed} episode headings")
+          PY
+      - name: Upload HTML fixture for inspection
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: request-002-official-html
+          path: data/official-page-debug.html
+          if-no-files-found: warn
+          retention-days: 7
