@@ -127,7 +127,7 @@ def resolve_spotify_album(episode: dict[str, Any], work_dir: Path) -> dict[str, 
         numbers.append(track_number)
     if len(set(numbers)) != len(numbers) or sorted(numbers) != list(range(1, len(records) + 1)):
         disc_numbers = [item.get("disc_number") for item in records]
-        raise ValueError("Spotify album track sequence is incomplete. Track numbers: " + str(numbers) + "; disc numbers: " + str(disc_numbers))
+        raise ValueError("Spotify album " + album_id + " (" + album_name + ") track sequence is incomplete. Track numbers: " + str(numbers) + "; disc numbers: " + str(disc_numbers))
     records.sort(key=lambda item: int(item["track_number"]))
     if not all(isinstance(item.get("name"), str) and item["name"].strip() for item in records):
         raise ValueError("Spotify album contains a track without a title.")
