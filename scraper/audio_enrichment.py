@@ -581,9 +581,14 @@ def enrich_catalogue(
             "audio_release": audio_release,
             "matched_tracks": discovery["matched_tracks"],
         })
+        playlist = audio_release["youtube_music"].get("playlist")
+        playlist_note = (
+            f", playlist {playlist['playlist_id']}" if isinstance(playlist, dict)
+            else ", no verified album playlist"
+        )
         print(
-            f"  verified: Spotify {audio_release['spotify']['track_count']} tracks, "
-            f"YouTube Music {audio_release['youtube_music']['playlist_id']}",
+            f"  verified: {audio_release['spotify']['track_count']} individual YouTube Music song links"
+            f"{playlist_note}",
             flush=True,
         )
         if write:
