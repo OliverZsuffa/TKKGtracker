@@ -54,9 +54,10 @@ TKKGTracker does not own:
 Only after the runtime client is proven:
 - Remove the Python source scraper and scraper-only dependencies.
 - Remove source adapters, source discovery, and audio enrichment code.
-- Remove the episode schema and generated authoritative episode JSON/CSV from this repository.
+- Remove the episode schema and generated CSV/report from this repository after the TKKGData deployment build is proven.
 - Remove weekly catalogue scraping and audio enrichment workflows.
 - Remove documentation that says TKKGTracker owns or publishes the catalogue.
+- Retain data/episodes.json as the app's local last-known-good build fallback and import input. It is not maintained or scraped here and is refreshed from TKKGData for deployment.
 - Retain app-specific fixtures only when clearly marked as test fixtures and not treated as a live catalogue.
 - Preserve relevant source findings by migrating them into TKKGData's knowledge base and request notes.
 
