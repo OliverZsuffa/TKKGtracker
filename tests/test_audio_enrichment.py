@@ -210,7 +210,7 @@ class AudioEnrichmentTests(unittest.TestCase):
         }
         with patch(
             "scraper.audio_enrichment.discover_episode_audio",
-            return_value=fake_release,
+            return_value={"audio_release": fake_release, "matched_tracks": []},
         ):
             report = enrich_catalogue(episodes, limit=2, latest_first=True, ytm=object())
         self.assertEqual([item["number"] for item in report["verified"]], [3, 2])
