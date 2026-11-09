@@ -50,7 +50,7 @@ Request 001 contains the approved plan for the catalogue scraper and listening t
 
 ## Shared audio source catalogue
 
-The scraper can optionally enrich episodes with verified Spotify album and YouTube Music playlist identifiers. The published `data/episodes.json` remains the canonical dataset. The normal catalogue refresh preserves previously verified audio mappings when an audio provider is unavailable.
+The scraper can optionally enrich episodes with verified Spotify album identifiers and individual YouTube Music song URLs. A verified YouTube Music album playlist URL is stored as an additional convenience link when available. The published `data/episodes.json` remains the canonical dataset. The normal catalogue refresh preserves previously verified audio mappings when an audio provider is unavailable.
 
 Audio discovery uses optional dependencies:
 
@@ -75,7 +75,7 @@ For diagnostics or manual recovery, a known playlist can be checked without sear
 
 This override is optional. Normal discovery searches YouTube Music automatically.
 
-The default is dry-run. Discovery uses spotDL for Spotify metadata and the unofficial `ytmusicapi` client for public YouTube Music search and playlist metadata. Public unauthenticated access is attempted; no account cookies or credentials are stored. Provider failures and ambiguous matches are reported and do not create mappings.
+The default is dry-run. Discovery uses spotDL for Spotify metadata and the unofficial `ytmusicapi` client for public YouTube Music song search and optional playlist metadata. Every Spotify track must receive one unique YouTube Music song match with an exact normalized title and corroborating artist, album, or duration evidence. Ambiguous or weak matches prevent publication. Playlist discovery is optional and does not block verified individual song links. Public unauthenticated access is attempted; no account cookies or credentials are stored.
 
 A manual GitHub Actions workflow is available under Actions → Discover TKKG audio sources. It defaults to episode 150 in dry-run mode. Enable the write input only after reviewing the report. A weekly scheduled run checks up to five highest-numbered episodes without verified mappings and publishes only fully verified results. Use manual dispatch with an episode number or a bounded limit for historical backfill.
 
