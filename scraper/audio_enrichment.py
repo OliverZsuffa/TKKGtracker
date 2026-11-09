@@ -418,7 +418,7 @@ def main() -> int:
             catalogue_path=args.catalogue,
         )
         args.report.parent.mkdir(parents=True, exist_ok=True)
-        args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
+        args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(
             f"Audio discovery complete: {len(report['verified'])} verified, "
             f"{len(report['failures'])} unresolved.",
