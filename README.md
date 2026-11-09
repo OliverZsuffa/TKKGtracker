@@ -8,7 +8,7 @@ TKKGTracker can be installed from its GitHub Pages website as a Progressive Web 
 
 Use the app normally. Listening status, ratings, and notes remain stored locally in the browser/app on that device. Use **Export progress** and **Import progress** to back up or move them; there is no account or cloud sync.
 
-The app can use the last successfully cached catalogue offline after it has loaded online once. The deployment workflow fetches and validates the latest catalogue from TKKGData, then publishes it at the same same-origin URL used by the app today. The app interface, browser storage, service worker, and offline behaviour are unchanged. Offline mode does not make external streaming services available without internet access. When online, open the app with a connection so Chrome can check for app updates and the tracker can load the latest catalogue.
+The app can use the last successfully cached catalogue offline after it has loaded online once. The deployment workflow fetches and validates the latest catalogue from TKKGData, then publishes it at the same-origin URL used by the app today. The app interface, browser storage, service worker, and offline behaviour are unchanged. Offline mode does not make external streaming services available without internet access. When online, open the app with a connection so Chrome can check for app updates and the tracker can load the latest catalogue.
 
 If Chrome does not offer **Install app**, first open the actual HTTPS website in Chrome (not an in-app browser), reload it while online, and check the browser menu again.
 
@@ -43,4 +43,4 @@ Reusable project architecture and lessons belong in docs/knowledge/. Read the pr
 
 ## Current status
 
-Request 010 documents the migration to TKKGData. The migration is designed to preserve all existing tracker behaviour. TKKGTracker continues to own only the app, local listening progress, and user preferences.
+Request 010 records the completed migration to TKKGData. The app source and existing tracker behaviour remain unchanged. TKKGTracker continues to own only the app, local listening progress, and user preferences.
