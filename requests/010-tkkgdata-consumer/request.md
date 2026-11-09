@@ -1,7 +1,7 @@
 # Request 010: Make TKKGTracker a TKKGData consumer
 
 ## Status
-Approved by Oliver on 2026-11-09. Implementation in progress. The migration must preserve all existing TKKGTracker functionality without user-visible changes.
+Approved by Oliver on 2026-11-09. Implemented and deployed to GitHub Pages. Manual verification of progress preservation and offline PWA behaviour remains outstanding.
 
 ## Desired outcome
 Change TKKGTracker from a combined scraper and listening tracker into a focused application that consumes the canonical dataset published by TKKGData.
@@ -54,19 +54,19 @@ TKKGData request 001 defines the shared architecture. This request depends on it
 - Removing the old catalogue path before the replacement has passed the cutover checks.
 
 ## Acceptance criteria
-- [ ] The app reads the published TKKGData dataset using the agreed stable endpoint.
-- [ ] The app validates schema compatibility and required fields before accepting a new dataset.
-- [ ] A failed fetch, invalid response, or incompatible schema does not overwrite the last-known-good cache.
+- [x] The app reads the published TKKGData dataset using the agreed stable endpoint.
+- [x] The app validates schema compatibility and required fields before accepting a new dataset.
+- [x] A failed fetch, invalid response, or incompatible schema does not overwrite the last-known-good cache.
 - [ ] Offline launch continues to display the last valid catalogue.
 - [ ] Existing progress, ratings, notes, favourites, and settings survive the migration unchanged.
-- [ ] Episode identity and ordering remain stable across the old and new datasets.
-- [ ] Optional or missing metadata does not break rendering.
-- [ ] No active scraper or source-enrichment workflow remains in TKKGTracker after cutover.
-- [ ] No second authoritative episode JSON or CSV is maintained here.
+- [x] Episode identity and ordering remain stable across the old and new datasets.
+- [x] Optional or missing metadata does not break rendering.
+- [x] No active scraper or source-enrichment workflow remains in TKKGTracker after cutover.
+- [x] No second authoritative episode JSON or CSV is maintained here.
 - [ ] The old scraper and audio enrichment are retired only after TKKGData publication and app consumption are verified.
-- [ ] Automated tests, typecheck, frontend tests, and production build pass.
+- [x] Automated tests, typecheck, frontend tests, and production build pass.
 - [ ] Manual online, refresh, offline, progress-preservation, and PWA checks pass.
-- [ ] README and knowledge base accurately describe TKKGTracker as a consumer application.
+- [x] README and knowledge base accurately describe TKKGTracker as a consumer application.
 
 ## Dependencies
 - TKKGData request 001 must be approved and implemented sufficiently to publish a valid dataset.
