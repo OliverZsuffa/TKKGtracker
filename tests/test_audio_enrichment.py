@@ -1,0 +1,149 @@
+from __future__ import annotations
+
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+from scraper.audio_enrichment import (
+    _track_titles_match,
+    audio_release_coverage,
+    find_verified_youtube_music_playlist,
+    preserve_verified_audio_releases,
+    resolve_spotify_album,
+)
+
+
+EPISODE = {"number": 150, "title": "Heiße Nächte im Dezember"}
+SPOTIFY = {
+    "album_id": "0ZqyFeMXxCyIJvYptGlnn1",
+    "url": "https://open.spotify.com/album/0ZqyFeMXxCyIJvYptGlnn1",
+    "title": "150/Heiße Nächte im Dezember",
+    "track_count": 2,
+    "tracks": [
+        {"name": "150 - Heiße Nächte im Dezember - Teil 01", "track_number": 1},
+        {"name": "150 - Heiße Nächte im Dezember - Teil 02", "track_number": 2},
+    ],
+}
+
+
+class FakeYTMusic:
+    def __init__(self, playlist_ids=None, tracks=None):
+        self.playlist_ids = playlist_ids or ["OLAK5uy_example123"]
+        self.tracks = tracks or [
+            {"title": "150 - Heiße Nächte im Dezember - Teil 01", "artists": [{"name": "TKKG"}]},
+            {"title": "150 - Heiße Nächte im Dezember - Teil 02", "artists": [{"name": "TKKG"}]},
+        ]
+        self.search_calls = []
+
+    def search(self, query, filter, limit):
+        self.search_calls.append((query, filter, limit))
+        return [
+            {
+                "resultType": "album",
+                "playlistId": playlist_id,
+                "title": "150/Heiße Nächte im Dezember",
+                "artist": "TKKG",
+            }
+            for playlist_id in self.playlist_ids
+        ] if filter == "albums" else []
+
+    def get_playlist(self, playlist_id, limit=None):
+        return {
+            "title": "150/Heiße Nächte im Dezember",
+            "tracks": self.tracks,
+        }
+
+
+class AudioEnrichmentTests(unittest.TestCase):
+    def test_track_lists_must_match_exactly_in_order(self):
+        self.assertTrue(_track_titles_match(SPOTIFY["tracks"], FakeYTMusic().tracks))
+        reversed_tracks = list(reversed(FakeYTMusic().tracks))
+        self.assertFalse(_track_titles_match(SPOTIFY["tracks"], reversed_tracks))
+
+    def test_known_episode_150_playlist_id_is_discovered_and_verified(self):
+        ytm = FakeYTMusic(["OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI"])
+        result = find_verified_youtube_music_playlist(EPISODE, SPOTIFY, ytm)
+        self.assertEqual(
+            result["playlist_id"],
+            "OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI",
+        )
+        self.assertEqual(result["track_count"], 2)
+        self.assertTrue(result["url"].endswith("OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI"))
+
+    def test_wrong_track_list_is_rejected(self):
+        ytm = FakeYTMusic(tracks=[
+            {"title": "150 - Heiße Nächte im Dezember - Teil 01", "artists": [{"name": "TKKG"}]},
+            {"title": "An unrelated recording", "artists": [{"name": "TKKG"}]},
+        ])
+        with self.assertRaisesRegex(ValueError, "No verified YouTube Music playlist"):
+            find_verified_youtube_music_playlist(EPISODE, SPOTIFY, ytm)
+
+    def test_multiple_verified_playlists_are_ambiguous(self):
+        ytm = FakeYTMusic(["OLAK5uy_first123", "OLAK5uy_second123"])
+        with self.assertRaisesRegex(ValueError, "Ambiguous YouTube Music match"):
+            find_verified_youtube_music_playlist(EPISODE, SPOTIFY, ytm)
+
+    def test_playlist_without_tkkg_artist_evidence_is_rejected(self):
+        tracks = [
+            {"title": item["name"], "artists": [{"name": "Unknown Artist"}]}
+            for item in SPOTIFY["tracks"]
+        ]
+        ytm = FakeYTMusic(tracks=tracks)
+        with self.assertRaisesRegex(ValueError, "No verified YouTube Music playlist"):
+            find_verified_youtube_music_playlist(EPISODE, SPOTIFY, ytm)
+
+    def test_spotify_album_count_comes_from_actual_track_records(self):
+        first_track = [{
+            "name": "150 - Heiße Nächte im Dezember - Teil 01",
+            "artists": ["TKKG"],
+            "album_id": SPOTIFY["album_id"],
+            "album_name": SPOTIFY["title"],
+        }]
+        album_tracks = [
+            {**track, "album_id": SPOTIFY["album_id"]}
+            for track in SPOTIFY["tracks"]
+        ]
+        with patch(
+            "scraper.audio_enrichment._save_spotify_metadata",
+            side_effect=[first_track, album_tracks],
+        ):
+            result = resolve_spotify_album(EPISODE, Path("."))
+        self.assertEqual(result["track_count"], 2)
+
+    def test_previous_verified_mapping_survives_empty_refresh(self):
+        old = {
+            "spotify": {"album_id": "a" * 22},
+            "youtube_music": {"playlist_id": "OLAK5uy_example123"},
+            "verification": {"status": "verified"},
+        }
+        refreshed = [{"number": 150, "title": EPISODE["title"]}]
+        conflicts = preserve_verified_audio_releases(
+            refreshed,
+            [{"number": 150, "audio_release": old}],
+        )
+        self.assertEqual(conflicts, [])
+        self.assertEqual(refreshed[0]["audio_release"], old)
+
+    def test_previous_verified_mapping_wins_on_conflict(self):
+        old = {"verification": {"status": "verified"}, "source": "old"}
+        changed = {"verification": {"status": "verified"}, "source": "new"}
+        refreshed = [{"number": 150, "audio_release": changed}]
+        conflicts = preserve_verified_audio_releases(
+            refreshed,
+            [{"number": 150, "audio_release": old}],
+        )
+        self.assertEqual(refreshed[0]["audio_release"], old)
+        self.assertEqual(len(conflicts), 1)
+
+    def test_coverage_counts_verified_and_missing_records(self):
+        episodes = [
+            {"number": 1, "title": "A", "audio_release": {"verification": {"status": "verified"}}},
+            {"number": 2, "title": "B"},
+        ]
+        coverage = audio_release_coverage(episodes)
+        self.assertEqual(coverage["verified_pairings"], 1)
+        self.assertEqual(coverage["missing_pairings"], [{"number": 2, "title": "B"}])
+
+
+if __name__ == "__main__":
+    unittest.main()
