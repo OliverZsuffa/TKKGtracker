@@ -48,4 +48,9 @@ The PR changed no tracker application source files, UI components, styling, prog
 
 The scraper, schema, CSV/report, scraper tests, Python dependencies, and old catalogue update workflow were removed from TKKGTracker after the TKKGData build-time sync passed. Historical request records remain for audit. The old audio enrichment PR #14 was closed after transferring its implementation to TKKGData.
 
+The migration was merged to main in commit aebed2ff7041d01ccceaa6e0fe9d139b427d00f0.
+- GitHub Pages deployment run 42700393538 completed successfully.
+- The deploy workflow fetched and validated the 243-record TKKGData dataset, built the application, and deployed the Pages artifact.
+- No application source, styling, progress storage, or service worker files were changed.
+
 Manual verification in a real browser and installed PWA has not yet been performed. It remains the final confirmation for progress preservation and offline operation.
