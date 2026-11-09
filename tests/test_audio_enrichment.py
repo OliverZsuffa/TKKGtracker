@@ -11,6 +11,7 @@ from scraper.audio_enrichment import (
     preserve_verified_audio_releases,
     resolve_spotify_album,
 )
+from scraper.validate import validate_catalogue
 
 
 EPISODE = {"number": 150, "title": "Heiße Nächte im Dezember"}
@@ -134,6 +135,35 @@ class AudioEnrichmentTests(unittest.TestCase):
         )
         self.assertEqual(refreshed[0]["audio_release"], old)
         self.assertEqual(len(conflicts), 1)
+
+    def test_schema_and_cross_provider_counts_validate(self):
+        episode = {
+            "number": 150, "title": EPISODE["title"], "series": "TKKG",
+            "synopsis": None, "cover_url": None, "release_date": None, "release_year": None,
+            "physical_releases": [], "tracks": [], "cast": [], "credits": [], "ratings": [],
+            "sources": [{"name": "test", "url": "https://example.com", "retrieved_at": "2026-11-09T00:00:00Z"}],
+            "last_checked": "2026-11-09T00:00:00Z", "listening_links": [],
+            "audio_release": {
+                "spotify": {
+                    "album_id": "0ZqyFeMXxCyIJvYptGlnn1",
+                    "url": "https://open.spotify.com/album/0ZqyFeMXxCyIJvYptGlnn1",
+                    "title": "150/Heiße Nächte im Dezember", "track_count": 2,
+                    "source_query": "TKKG 150 Heiße Nächte im Dezember Teil 01",
+                },
+                "youtube_music": {
+                    "playlist_id": "OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI",
+                    "url": "https://music.youtube.com/playlist?list=OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI",
+                    "title": "150/Heiße Nächte im Dezember", "track_count": 2,
+                },
+                "verification": {
+                    "status": "verified", "verified_at": "2026-11-09T00:00:00Z",
+                    "method": "test", "matched_track_count": 2,
+                },
+            },
+        }
+        self.assertEqual(validate_catalogue([episode]), [])
+        episode["audio_release"]["youtube_music"]["track_count"] = 3
+        self.assertTrue(any("track counts differ" in error for error in validate_catalogue([episode])))
 
     def test_coverage_counts_verified_and_missing_records(self):
         episodes = [
