@@ -53,6 +53,7 @@ jobs:
           INPUT_WRITE: ${{ inputs.write }}
         run: |
           ARGS=(--limit "${INPUT_LIMIT:-5}")
+          if [ "$EVENT_NAME" = "push" ]; then INPUT_EPISODE=150; fi
           if [ -n "${INPUT_EPISODE:-}" ]; then
             ARGS+=(--episode "$INPUT_EPISODE")
           fi
