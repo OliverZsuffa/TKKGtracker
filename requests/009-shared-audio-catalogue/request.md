@@ -4,7 +4,7 @@
 Transferred to TKKGData on 2026-11-09. This tracker request is superseded. No audio discovery or catalogue ownership remains in TKKGTracker.
 
 ## Desired outcome
-Create one central, machine-readable TKKG dataset in TKKGtracker that records verified Spotify album and YouTube Music playlist identifiers for each regular main-series episode. TKKGtracker discovers and maintains this information. TKKGDownloader and future tools consume the published dataset instead of maintaining their own independent episode-to-playlist mappings or repeatedly searching for sources.
+Create one central, machine-readable TKKG dataset in TKKGData that records verified Spotify album and YouTube Music source identifiers for each regular main-series episode. TKKGData discovers and maintains this information. TKKGTracker and TKKGDownloader consume the published dataset read-only.
 
 ## Context
 TKKGtracker already publishes `data/episodes.json` and `data/episodes.csv` from its scraper. The JSON catalogue is available to downstream tools through the GitHub Pages raw catalogue URL.
