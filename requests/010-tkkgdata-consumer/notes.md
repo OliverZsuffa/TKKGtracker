@@ -12,4 +12,9 @@
 Planning only. No app code, scraper code, workflow, catalogue, or progress storage has been changed by this request.
 
 ## Test results
-No tests have been run. Implementation depends on an approved and published TKKGData contract.
+GitHub Actions run 42695883009 was triggered for draft PR #15:
+- Python dependency installation succeeded.
+- All Python unit tests passed.
+- The frontend job failed during npm install with npm 10.9.9 reporting "Cannot read properties of null (reading 'edgesOut')".
+- npm audit, typecheck, frontend tests, and production build were skipped because dependency installation failed.
+- This is the same npm installation failure previously observed in this repository. It is not evidence of a regression in the documentation changes.
