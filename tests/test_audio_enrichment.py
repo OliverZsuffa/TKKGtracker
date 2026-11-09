@@ -228,8 +228,8 @@ class AudioEnrichmentTests(unittest.TestCase):
                         "title": "150/Heiße Nächte im Dezember", "track_count": 2,
                     },
                     "tracks": [
-                        {"track_number": 1, "spotify_title": SPOTIFY["tracks"][0]["name"], "video_id": "videoid00001", "url": "https://music.youtube.com/watch?v=videoid00001", "title": SPOTIFY["tracks"][0]["name"], "artists": ["TKKG"], "album": "150/Heiße Nächte im Dezember", "duration_seconds": 120, "match_score": 140, "match_evidence": ["exact_normalised_title", "episode_album"]},
-                        {"track_number": 2, "spotify_title": SPOTIFY["tracks"][1]["name"], "video_id": "videoid00002", "url": "https://music.youtube.com/watch?v=videoid00002", "title": SPOTIFY["tracks"][1]["name"], "artists": ["TKKG"], "album": "150/Heiße Nächte im Dezember", "duration_seconds": 120, "match_score": 140, "match_evidence": ["exact_normalised_title", "episode_album"]},
+                        {"track_number": 1, "spotify_title": SPOTIFY["tracks"][0]["name"], "video_id": "videoid0001", "url": "https://music.youtube.com/watch?v=videoid0001", "title": SPOTIFY["tracks"][0]["name"], "artists": ["TKKG"], "album": "150/Heiße Nächte im Dezember", "duration_seconds": 120, "match_score": 140, "match_evidence": ["exact_normalised_title", "episode_album"]},
+                        {"track_number": 2, "spotify_title": SPOTIFY["tracks"][1]["name"], "video_id": "videoid0002", "url": "https://music.youtube.com/watch?v=videoid0002", "title": SPOTIFY["tracks"][1]["name"], "artists": ["TKKG"], "album": "150/Heiße Nächte im Dezember", "duration_seconds": 120, "match_score": 140, "match_evidence": ["exact_normalised_title", "episode_album"]},
                     ],
                     "track_count": 2,
                 },
@@ -266,7 +266,7 @@ class AudioEnrichmentTests(unittest.TestCase):
     def test_individual_song_search_rejects_uncorroborated_exact_title(self):
         candidates = {
             SPOTIFY["tracks"][0]["name"]: [{
-                "videoId": "videoid00001",
+                "videoId": "videoid0001",
                 "title": SPOTIFY["tracks"][0]["name"],
                 "artists": [{"name": "Unknown"}],
                 "album": {"name": "Unrelated album"},
@@ -281,8 +281,8 @@ class AudioEnrichmentTests(unittest.TestCase):
         title = SPOTIFY["tracks"][0]["name"]
         candidates = {
             title: [
-                {"videoId": "videoid00001", "title": title, "artists": [{"name": "TKKG"}]},
-                {"videoId": "videoid00002", "title": title, "artists": [{"name": "TKKG"}]},
+                {"videoId": "videoid0001", "title": title, "artists": [{"name": "TKKG"}]},
+                {"videoId": "videoid0002", "title": title, "artists": [{"name": "TKKG"}]},
             ]
         }
         with self.assertRaisesRegex(ValueError, "Ambiguous YouTube Music song match"):
