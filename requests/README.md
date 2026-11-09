@@ -14,8 +14,8 @@ Every substantial change is tracked in its own request folder.
 
 ## Request index
 
-- [010: Make TKKGTracker a TKKGData consumer](010-tkkgdata-consumer/request.md) — replace local catalogue scraping and publication with the shared TKKGData dataset while preserving local progress and offline behaviour.
-- [009: Shared TKKG audio catalogue](009-shared-audio-catalogue/request.md) — earlier audio enrichment work; its useful implementation and research must be audited and transferred to TKKGData before this responsibility is retired.
+- [010: Make TKKGTracker a TKKGData consumer](010-tkkgdata-consumer/request.md) — consume the shared dataset at build time while preserving all tracker behaviour.
+- [009: Shared TKKG audio catalogue](009-shared-audio-catalogue/request.md) — historical request transferred to TKKGData. Its implementation and research now live in the TKKGData repository.
 - [008: Installable PWA](008-installable-pwa/request.md)
 - [008: Clean progress export](008-clean-progress-export/request.md)
 - [007: Episode streaming links](007-streaming-links/request.md)
