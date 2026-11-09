@@ -16,6 +16,10 @@
 
 Automated CI and the live episode 150 discovery workflow have been triggered. Their outcomes must be recorded after the runs finish. No live Spotify or YouTube Music result is claimed verified yet.
 
+The Python unit-test job passed on commits \`1248b55c\`, \`1616090f\`, and \`ccd48981\`. The frontend job repeatedly stopped at \`npm install\` with npm 10.9.9 error \`Cannot read properties of null (reading 'edgesOut')\`; typecheck, frontend tests, and build therefore did not run.
+
+The first live episode 150 run installed FFmpeg successfully and completed the Spotify metadata lookup, but rejected the returned Spotify album because its track numbers did not form a complete unique sequence. The YouTube Music search was not reached. A follow-up run is adding the actual returned track-number and disc-number values to the failure report so the metadata discrepancy can be diagnosed. No live Spotify/YouTube Music pairing is claimed verified yet.
+
 The current local execution environment cannot reach GitHub or install dependencies, so execution is being delegated to GitHub Actions. The implementation branch is not merged.
 
 ## Outstanding work
