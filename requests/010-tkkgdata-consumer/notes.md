@@ -35,4 +35,17 @@ Still pending:
 
 Earlier documentation-only PR #15 run 42695883009 passed all Python tests but the frontend job failed during npm install with npm 10.9.9 reporting "Cannot read properties of null (reading 'edgesOut')". The frontend checks were skipped.
 
-The build-time sync integration was added after TKKGData became available on main. Its CI result is pending and will be recorded after the workflow completes.
+The build-time sync integration was verified in GitHub Actions run 42698864075:
+- The TKKGData sync script syntax check passed.
+- The script fetched the live TKKGData main dataset and metadata and validated all 243 records.
+- npm 11 installation succeeded after npm 10.9.9 repeatedly failed with the known edgesOut error.
+- npm audit passed.
+- TypeScript typecheck passed.
+- Frontend tests passed.
+- Production Vite build passed.
+
+The PR changed no tracker application source files, UI components, styling, progress storage, or service worker. The changed-file list confirms that src/App.tsx, src/catalogue.ts, src/types.ts, src/storage.ts, src/styles.css, and public/service-worker.js are untouched. The local data/episodes.json fallback is retained.
+
+The scraper, schema, CSV/report, scraper tests, Python dependencies, and old catalogue update workflow were removed from TKKGTracker after the TKKGData build-time sync passed. Historical request records remain for audit. The old audio enrichment PR #14 was closed after transferring its implementation to TKKGData.
+
+Manual verification in a real browser and installed PWA has not yet been performed. It remains the final confirmation for progress preservation and offline operation.
