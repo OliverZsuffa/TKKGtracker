@@ -71,12 +71,18 @@ jobs:
             ARGS+=(--write)
           fi
           python -m scraper.audio_enrichment "${ARGS[@]}"
+      - name: Verify the known episode 150 playlist directly
+        if: github.event_name == 'push'
+        run: |
+          python -m scraper.audio_enrichment --episode 150 --playlist-id OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI --report data/episode150-playlist-check.json
       - name: Upload discovery report
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: tkkg-audio-enrichment-report
-          path: data/audio-enrichment-report.json
+          path: |
+            data/audio-enrichment-report.json
+            data/episode150-playlist-check.json
           if-no-files-found: warn
           retention-days: 30
       - name: Commit verified catalogue updates
