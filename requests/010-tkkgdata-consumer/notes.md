@@ -53,7 +53,7 @@ The scraper, schema, CSV/report, scraper tests, Python dependencies, and old cat
 
 The migration was merged to main in commit aebed2ff7041d01ccceaa6e0fe9d139b427d00f0.
 - TKKGData later added an optional verified audio_release object to episode 150, containing a 40-track Spotify and YouTube Music pairing. This is additive metadata and does not change any tracker UI fields or progress behaviour.
-- Tracker CI run 42710382814 passed its sync, typecheck, frontend tests, and production build against the 243-record dataset before the audio_release was published. A fresh sync/build is being run against the enriched dataset.
+- Tracker CI run 42710382814 passed its sync, typecheck, frontend tests, and production build against the 243-record dataset before the audio_release was published. A fresh sync/build against the enriched dataset passed in GitHub Actions run 42711902778. The sync fetched the 243-record canonical dataset including episode 150's additive audio_release metadata; npm audit, TypeScript typecheck, frontend tests, and production build all passed.
 - GitHub Pages deployment run 42700393538 completed successfully.
 - The deploy workflow fetched and validated the 243-record TKKGData dataset, built the application, and deployed the Pages artifact.
 - No application source, styling, progress storage, or service worker files were changed.
