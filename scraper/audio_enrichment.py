@@ -196,6 +196,7 @@ def _track_titles_match(spotify_tracks: list[dict[str, Any]], ytm_tracks: list[d
 
 def find_verified_youtube_music_playlist(
     episode: dict[str, Any], spotify: dict[str, Any], ytm: Any,
+    playlist_id_override: str | None = None,
 ) -> dict[str, Any]:
     number = int(episode["number"])
     title = str(episode["title"])
@@ -206,7 +207,11 @@ def find_verified_youtube_music_playlist(
     )
     candidates: dict[str, tuple[str, str, dict[str, Any]]] = {}
     search_summaries: list[dict[str, Any]] = []
-    for query in queries:
+    if playlist_id_override:
+        if not playlist_id_override.startswith(("OLAK5uy_", "PL")):
+            raise ValueError("The supplied YouTube Music playlist ID has an unsupported format.")
+        candidates[f"playlist:{playlist_id_override}"] = ("playlist", playlist_id_override, {})
+    for query in (() if playlist_id_override else queries):
         for filter_name in ("albums", "playlists"):
             try:
                 time.sleep(0.35)
@@ -289,10 +294,12 @@ def find_verified_youtube_music_playlist(
     return next(iter(verified.values()))
 
 
-def discover_episode_audio(episode: dict[str, Any], ytm: Any) -> dict[str, Any]:
+def discover_episode_audio(
+    episode: dict[str, Any], ytm: Any, playlist_id_override: str | None = None,
+) -> dict[str, Any]:
     with tempfile.TemporaryDirectory(prefix=f"tkkg_audio_{episode['number']:03d}_") as temp:
         spotify = resolve_spotify_album(episode, Path(temp))
-    youtube_music = find_verified_youtube_music_playlist(episode, spotify, ytm)
+    youtube_music = find_verified_youtube_music_playlist(episode, spotify, ytm, playlist_id_override)
     ytm_playlist_tracks = youtube_music.pop("_matched_tracks")
     verified_at = datetime.now(timezone.utc).isoformat()
     audio_release = {
@@ -377,6 +384,7 @@ def enrich_catalogue(
     episodes: list[dict[str, Any]], *, selected_numbers: set[int] | None = None,
     limit: int = 5, write: bool = False, ytm: Any = None,
     catalogue_path: Path = CATALOGUE_PATH, latest_first: bool = False,
+    playlist_id_override: str | None = None,
 ) -> dict[str, Any]:
     if limit < 1:
         raise ValueError("limit must be at least 1.")
@@ -406,7 +414,7 @@ def enrich_catalogue(
         number = episode.get("number")
         print(f"Discovering audio sources for episode {number}: {episode.get('title')}", flush=True)
         try:
-            discovery = discover_episode_audio(episode, ytm)
+            discovery = discover_episode_audio(episode, ytm, playlist_id_override)
             audio_release = discovery["audio_release"]
         except Exception as exc:
             report["failures"].append({
@@ -470,6 +478,7 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=5, help="Maximum number of missing episodes to process (default: 5).")
     parser.add_argument("--write", action="store_true", help="Save only successfully verified pairings to episodes.json. Default is dry-run.")
     parser.add_argument("--latest-first", action="store_true", help="Process the highest-numbered missing episodes first.")
+    parser.add_argument("--playlist-id", help="Optional explicit YouTube Music playlist ID for verification or recovery.")
     parser.add_argument("--catalogue", type=Path, default=CATALOGUE_PATH, help="Path to the episode JSON catalogue.")
     parser.add_argument("--report", type=Path, default=REPORT_PATH, help="Path for the JSON run report.")
     args = parser.parse_args()
@@ -480,6 +489,8 @@ def main() -> int:
             raise ValueError("Episode catalogue must be a JSON array.")
         if args.episode and any(number < 1 for number in args.episode):
             raise ValueError("Episode numbers must be positive.")
+        if args.playlist_id and (not args.episode or len(args.episode) != 1):
+            raise ValueError("--playlist-id requires exactly one --episode.")
         report = enrich_catalogue(
             episodes,
             selected_numbers=set(args.episode) if args.episode else None,
@@ -487,6 +498,7 @@ def main() -> int:
             write=args.write,
             catalogue_path=args.catalogue,
             latest_first=args.latest_first,
+            playlist_id_override=args.playlist_id,
         )
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
