@@ -3,6 +3,7 @@
 Store concise, reusable facts that help with multiple requests.
 
 ## Topics
+- [Audio source catalogue](audio-source-catalogue.md) — optional verified Spotify and YouTube Music metadata, discovery, preservation, and downstream contract.
 - [Catalogue source findings](catalogue-sources.md) — verified source coverage, extraction fields, and known catalogue inconsistencies.
 - [Browser progress storage](progress-storage.md) — local progress storage and export cleanup rules.
 - [PWA deployment and offline cache](pwa-deployment.md) — GitHub Pages subpath, catalogue runtime file, and service-worker caching rules.
