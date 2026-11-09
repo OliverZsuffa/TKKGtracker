@@ -6,19 +6,21 @@ The episode array in `data/episodes.json` remains the canonical shared TKKG data
 
 ## Verified audio object
 
-An audio object is published only after the Spotify album and YouTube Music playlist are both identified and their complete ordered track titles match exactly after conservative Unicode, case, and punctuation normalization.
+An audio object is published only after every Spotify track has one unambiguous YouTube Music song match. Titles must match exactly after conservative Unicode, case, and punctuation normalization, with additional corroboration from the TKKG artist, episode album identity, or matching duration. A full YouTube Music playlist is stored as a second entry point when it can also be verified, but playlist discovery is optional.
 
 - `spotify.album_id`, `spotify.url`, `spotify.title`, `spotify.track_count`, and `spotify.source_query`
-- `youtube_music.playlist_id`, `youtube_music.url`, `youtube_music.title`, and `youtube_music.track_count`
+- `youtube_music.tracks[]` stores the individual YouTube Music song URL, video ID, title, artists, album, duration, and match evidence for each Spotify track
+- `youtube_music.playlist` stores the verified album playlist ID, URL, title, and track count when available; it is `null` when playlist discovery fails
+- `youtube_music.track_count` is the count of individually verified song links
 - `verification.status`, `verification.verified_at`, `verification.method`, and `verification.matched_track_count`
 
-The three track counts must agree. IDs must agree with their corresponding URLs. The schema rejects unverified status values and unknown fields.
+The Spotify track count, individual YouTube Music track count, and matched track count must agree. Playlist track count must also agree when a playlist is available. Song video IDs and playlist IDs must agree with their corresponding URLs. The schema rejects unverified status values and unknown fields.
 
 ## Discovery
 
 Run `python -m scraper.audio_enrichment --episode 150` for a dry run. For a diagnostic or manual recovery, `--playlist-id OLAK...` can verify one explicitly supplied playlist with exactly one `--episode`; normal operation discovers the playlist automatically. Use `--write` only when verified results should be written to `data/episodes.json` and `data/episodes.csv`. Without an episode selector, `--limit N` processes at most N episodes that do not already have verified audio metadata.
 
-Spotify metadata is resolved using spotDL's metadata save operation. YouTube Music candidates are searched using `ytmusicapi`. Album search results can expose an `MPRE...` browse ID; resolve these with `get_album()` and use the returned `audioPlaylistId` when available. Playlist results may expose an `OLAK...` ID directly or through a `VLOLAK...` browse ID. Their public playlist track lists are then retrieved. A result is rejected if the title, TKKG artist evidence, track count, or ordered track titles do not match. Multiple fully matching candidates are treated as ambiguous.
+Spotify metadata is resolved using spotDL's metadata save operation. YouTube Music candidates are searched using `ytmusicapi`. Album search results can expose an `MPRE...` browse ID; resolve these with `get_album()` and use the returned `audioPlaylistId` when available. Playlist results may expose an `OLAK...` ID directly or through a `VLOLAK...` browse ID. Their public playlist track lists are then retrieved. Individual song searches are primary. A candidate needs an exact normalized title plus corroborating evidence from the TKKG artist, matching episode album, or close duration. A unique best candidate is required. Missing or ambiguous songs stop publication for that episode. Playlist discovery runs independently as an optional convenience link. A playlist is stored only if its title, TKKG artist evidence, track count, and ordered track titles all match. Multiple fully matching playlist candidates are treated as ambiguous.
 
 The current matching rule is intentionally conservative. It does not attempt fuzzy matching, alternate-edition selection, or automatic acceptance of bonus tracks. Such episodes remain unresolved for review.
 
@@ -38,4 +40,4 @@ The normal episode scraper loads the previous catalogue and carries forward veri
 
 ## Downstream consumers
 
-TKKGDownloader should fetch the published `episodes.json`, look up an episode by `number`, and use `audio_release` only when `verification.status` is `verified`. It should pass the YouTube Music URL and Spotify album URL to spotDL in the documented pipe-separated format. Consumers are read-only and must not maintain separate playlist mappings.
+TKKGDownloader should fetch the published `episodes.json`, look up an episode by `number`, and use `audio_release` only when `verification.status` is `verified`. For a robust download, it should pair each `youtube_music.tracks[].url` with the Spotify album URL using spotDL's documented pipe-separated format. The optional `youtube_music.playlist.url` is an additional way to access the complete release, not a prerequisite for a verified mapping. Consumers are read-only and must not maintain separate playlist mappings.
