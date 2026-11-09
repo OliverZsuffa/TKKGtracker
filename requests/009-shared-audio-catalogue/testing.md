@@ -27,7 +27,7 @@ For each test, write the actual outcome in **Actual result / Oliver's notes**. T
 
 **Actual result / Oliver's notes:**
 
-The first live dry-run installed FFmpeg and completed Spotify lookup but failed the Spotify track-sequence check. A later run passed Spotify validation, found an `MPRE...` YouTube Music album result, but `get_album()` returned no `audioPlaylistId`. The implementation now recognizes `audioPlaylistId` directly in search results, recognizes `VLOLAK5uy_...` browse IDs, and searches an additional episode-number-plus-title query. Another live dry-run is pending. No mapping has been saved yet.
+The first live dry-run installed FFmpeg and completed Spotify lookup but failed the Spotify track-sequence check. A later run passed Spotify validation, found an `MPRE...` YouTube Music album result, but `get_album()` returned no `audioPlaylistId`. The implementation now recognizes `audioPlaylistId` directly in search results, recognizes `VLOLAK5uy_...` browse IDs, and searches an additional episode-number-plus-title query. The latest automatic search returned the exact album title and TKKG artist, but its `audioPlaylistId` was null. The playlist-filter result was an unrelated generic `Hörspiel` playlist and was rejected. A direct verification run using the official OLAK playlist ID supplied by Oliver is now in progress. No mapping has been saved yet.
 
 ---
 
