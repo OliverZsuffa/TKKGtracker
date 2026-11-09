@@ -25,7 +25,7 @@ const [{ text: datasetText, value: episodes }, { value: metadata }] = await Prom
 if (!Array.isArray(episodes) || episodes.length === 0) {
   throw new Error("TKKGData returned an empty or invalid episode array.");
 }
-if (!metadata || typeof metadata !== "object" || !/^1\\./.test(metadata.schema_version ?? "")) {
+if (!metadata || typeof metadata !== "object" || !/^1\./.test(metadata.schema_version ?? "")) {
   throw new Error(`Unsupported TKKGData schema version: ${metadata?.schema_version ?? "missing"}`);
 }
 if (metadata.episode_count !== episodes.length) {
