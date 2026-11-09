@@ -261,6 +261,107 @@
         },
         "additionalProperties": false
       }
+    },
+    "audio_release": {
+      "type": "object",
+      "required": [
+        "spotify",
+        "youtube_music",
+        "verification"
+      ],
+      "properties": {
+        "spotify": {
+          "type": "object",
+          "required": [
+            "album_id",
+            "url",
+            "title",
+            "track_count",
+            "source_query"
+          ],
+          "properties": {
+            "album_id": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9]{22}$"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://open\\\\.spotify\\\\.com/album/[A-Za-z0-9]{22}$"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1
+            },
+            "track_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "source_query": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "youtube_music": {
+          "type": "object",
+          "required": [
+            "playlist_id",
+            "url",
+            "title",
+            "track_count"
+          ],
+          "properties": {
+            "playlist_id": {
+              "type": "string",
+              "pattern": "^(OLAK5uy_[A-Za-z0-9_-]+|PL[A-Za-z0-9_-]+)$"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://music\\\\.youtube\\\\.com/playlist\\\\?list="
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1
+            },
+            "track_count": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "verification": {
+          "type": "object",
+          "required": [
+            "status",
+            "verified_at",
+            "method",
+            "matched_track_count"
+          ],
+          "properties": {
+            "status": {
+              "const": "verified"
+            },
+            "verified_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "method": {
+              "type": "string",
+              "minLength": 1
+            },
+            "matched_track_count": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false
