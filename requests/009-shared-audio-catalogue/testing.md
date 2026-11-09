@@ -27,6 +27,8 @@ For each test, write the actual outcome in **Actual result / Oliver's notes**. T
 
 **Actual result / Oliver's notes:**
 
+First live dry-run in GitHub Actions installed FFmpeg and completed the spotDL Spotify lookup. It stopped before YouTube Music search because the returned Spotify track numbers did not form a complete unique sequence. A second diagnostic run is in progress to report the actual track numbers and disc numbers. No mapping was saved. The playlist ID has not yet been checked by the automated discovery run.
+
 ---
 
 ## Test 2: Automatic discovery without a supplied playlist URL
@@ -116,4 +118,7 @@ For each test, write the actual outcome in **Actual result / Oliver's notes**. T
 
 ## General notes / ideas / outstanding issues
 
-_Record feature-wide observations or unresolved issues here._
+- Python unit tests: 50 passed on the implementation branch.
+- Frontend CI is currently blocked at `npm install` by npm 10.9.9 throwing `Cannot read properties of null (reading 'edgesOut')`. Frontend typecheck, tests, and build have not run in those CI attempts.
+- The live discovery process must resolve the Spotify track-number discrepancy before YouTube Music playlist matching can be assessed.
+
