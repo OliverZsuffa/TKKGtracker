@@ -63,12 +63,13 @@ Only after the runtime client is proven:
 Do not delete files merely because they appear unused. Verify references and build output first.
 
 ## 7. PWA and deployment
-1. Verify the TKKGData endpoint is accessible from the deployed GitHub Pages origin.
-2. Define service-worker behaviour for the remote dataset. Cache only a fully validated successful response.
-3. Ensure the app shell and dataset have appropriate cache lifetimes.
-4. Confirm the last valid dataset remains available offline.
-5. Confirm a new dataset version becomes visible after refresh without reinstalling the PWA.
-6. Ensure deployment no longer depends on a local scraper-generated catalogue.
+1. Fetch and validate the latest TKKGData JSON and metadata on the GitHub Actions runner before building the app.
+2. Copy the validated catalogue into the existing public/data/episodes.json runtime location.
+3. Keep the existing same-origin URL, service worker, cache name, navigation handling, and cache-first or network-first behaviour unchanged.
+4. Keep the catalogue embedded in the app bundle as the initial fallback, exactly as today.
+5. Schedule a weekly tracker deployment after the TKKGData catalogue and audio enrichment schedules.
+6. Confirm a newly published dataset becomes visible after the next deployment and app refresh, without reinstalling the PWA.
+7. Ensure deployment no longer runs a local scraper.
 
 ## 8. Tests
 Automated:
