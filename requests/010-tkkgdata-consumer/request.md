@@ -1,7 +1,7 @@
 # Request 010: Make TKKGTracker a TKKGData consumer
 
 ## Status
-Awaiting approval. Planning only. No application or scraper implementation is authorized yet.
+Approved by Oliver on 2026-11-09. Implementation in progress. The migration must preserve all existing TKKGTracker functionality without user-visible changes.
 
 ## Desired outcome
 Change TKKGTracker from a combined scraper and listening tracker into a focused application that consumes the canonical dataset published by TKKGData.
