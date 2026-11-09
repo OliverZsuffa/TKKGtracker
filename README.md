@@ -69,6 +69,12 @@ Write only verified results to the central JSON and CSV catalogue:
 
     python -m scraper.audio_enrichment --episode 150 --write
 
+For diagnostics or manual recovery, a known playlist can be checked without search:
+
+    python -m scraper.audio_enrichment --episode 150 --playlist-id OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI
+
+This override is optional. Normal discovery searches YouTube Music automatically.
+
 The default is dry-run. Discovery uses spotDL for Spotify metadata and the unofficial `ytmusicapi` client for public YouTube Music search and playlist metadata. Public unauthenticated access is attempted; no account cookies or credentials are stored. Provider failures and ambiguous matches are reported and do not create mappings.
 
 A manual GitHub Actions workflow is available under Actions → Discover TKKG audio sources. It defaults to episode 150 in dry-run mode. Enable the write input only after reviewing the report. A weekly scheduled run checks up to five highest-numbered episodes without verified mappings and publishes only fully verified results. Use manual dispatch with an episode number or a bounded limit for historical backfill.
