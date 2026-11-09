@@ -29,8 +29,8 @@ SPOTDL_TIMEOUT_SECONDS = 180
 
 def _normalise(value: str) -> str:
     value = unicodedata.normalize("NFKC", value).casefold()
-    value = re.sub(r"^\\s*tkkg\\s+", "", value)
-    value = re.sub(r"[^\\w]+", " ", value, flags=re.UNICODE)
+    value = re.sub(r"^\s*tkkg\s+", "", value)
+    value = re.sub(r"[^\w]+", " ", value, flags=re.UNICODE)
     return " ".join(value.split())
 
 
@@ -232,7 +232,7 @@ def find_verified_youtube_music_playlist(
             rejected.append(f"{playlist_id}: no track list returned")
             continue
         artist_names = _candidate_artists(candidate, playlist)
-        if not any("tkkg" in _normalise(name) for name in artist_names):
+        if not any(re.search(r"\btkkg\b", unicodedata.normalize("NFKC", name).casefold()) for name in artist_names):
             rejected.append(f"{playlist_id}: no TKKG artist evidence")
             continue
         if not _track_titles_match(spotify["tracks"], tracks):
