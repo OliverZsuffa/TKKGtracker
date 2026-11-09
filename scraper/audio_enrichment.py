@@ -204,6 +204,7 @@ def find_verified_youtube_music_playlist(
         f"{number} {title}",
     )
     candidates: dict[str, tuple[str, str, dict[str, Any]]] = {}
+    search_summaries: list[dict[str, Any]] = []
     for query in queries:
         for filter_name in ("albums", "playlists"):
             try:
@@ -214,6 +215,7 @@ def find_verified_youtube_music_playlist(
             for result in results:
                 if not isinstance(result, dict):
                     continue
+                search_summaries.append({key: result.get(key) for key in ("resultType", "title", "browseId", "playlistId", "audioPlaylistId", "artist", "artists") if result.get(key) is not None} | {"filter": filter_name})
                 candidate_title = str(result.get("title") or "")
                 if _normalise(title) not in _normalise(candidate_title):
                     continue
@@ -278,7 +280,8 @@ def find_verified_youtube_music_playlist(
 
     if len(verified) == 0:
         detail = "; ".join(rejected[:5]) or "no matching album or playlist candidates found"
-        raise ValueError(f"No verified YouTube Music playlist for episode {number}: {detail}")
+        search_detail = json.dumps(search_summaries[:20], ensure_ascii=False)
+        raise ValueError(f"No verified YouTube Music playlist for episode {number}: {detail}. Search results: {search_detail}")
     if len(verified) > 1:
         ids = ", ".join(sorted(verified))
         raise ValueError(f"Ambiguous YouTube Music match for episode {number}; verified candidates: {ids}")
