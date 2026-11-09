@@ -143,11 +143,11 @@ def resolve_spotify_album(episode: dict[str, Any], work_dir: Path) -> dict[str, 
 
 
 def _candidate_source(candidate: dict[str, Any], filter_name: str) -> tuple[str, str] | None:
-    playlist_id = candidate.get("playlistId")
+    playlist_id = candidate.get("playlistId") or candidate.get("audioPlaylistId")
     if isinstance(playlist_id, str) and playlist_id.startswith(("OLAK5uy_", "PL")):
         return "playlist", playlist_id
     browse_id = candidate.get("browseId")
-    if isinstance(browse_id, str) and browse_id.startswith("VLPL"):
+    if isinstance(browse_id, str) and browse_id.startswith(("VLPL", "VLOLAK5uy_")):
         return "playlist", browse_id[2:]
     if filter_name == "albums" and isinstance(browse_id, str) and browse_id.startswith("MPRE"):
         return "album", browse_id
@@ -201,6 +201,7 @@ def find_verified_youtube_music_playlist(
     queries = (
         f"TKKG {number:03d} {title}",
         f"TKKG Folge {number} {title}",
+        f"{number} {title}",
     )
     candidates: dict[str, tuple[str, str, dict[str, Any]]] = {}
     for query in queries:
@@ -236,7 +237,7 @@ def find_verified_youtube_music_playlist(
                     continue
                 playlist_id = album.get("audioPlaylistId")
                 if not isinstance(playlist_id, str) or not playlist_id.startswith("OLAK5uy_"):
-                    rejected.append(f"{source_id}: album has no public audio playlist ID")
+                    rejected.append(f"{source_id}: album {album.get('title')!r} by {album.get('artists')!r} has no public audio playlist ID; response keys: {sorted(album.keys())}")
                     continue
                 candidate = {**candidate, **album}
             else:
