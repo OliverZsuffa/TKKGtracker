@@ -211,12 +211,18 @@ def find_verified_youtube_music_playlist(
                 if not isinstance(result, dict):
                     continue
                 playlist_id = _candidate_playlist_id(result)
-                if playlist_id:
-                    candidates.setdefault(playlist_id, result)
+                candidate_title = str(result.get("title") or "")
+                if not playlist_id or _normalise(title) not in _normalise(candidate_title):
+                    continue
+                if playlist_id not in candidates and len(candidates) >= 8:
+                    continue
+                candidates.setdefault(playlist_id, result)
 
     verified: dict[str, dict[str, Any]] = {}
     rejected: list[str] = []
+    print(f"YouTube Music search found {len(candidates)} title-matching candidate(s).", flush=True)
     for playlist_id, candidate in candidates.items():
+        print(f"Checking YouTube Music candidate {playlist_id}...", flush=True)
         try:
             time.sleep(0.35)
             playlist = ytm.get_playlist(playlist_id, limit=None)
