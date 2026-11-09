@@ -28,6 +28,10 @@ The current matching rule is intentionally conservative. It does not attempt fuz
 
 spotDL reads Spotify metadata and uses the paired YouTube Music URL as the audio source. Its documented manual pairing format is `YouTubeMusicURL|SpotifyAlbumURL`. The downloader integration must confirm this against its installed spotDL version before relying on the dataset in production.
 
+## Backfill and scheduled discovery
+
+A weekly GitHub Actions run processes at most five highest-numbered episodes that do not yet have verified mappings. It writes only fully verified pairings. Manual workflow dispatch supports a specific episode or a bounded batch for historical backfill. The default manual mode is dry-run.
+
 ## Preservation
 
 The normal episode scraper loads the previous catalogue and carries forward verified audio objects. Empty enrichment, provider failures, or changed mappings do not silently erase or replace an existing verified object. Conflicts are reported for review. The regular episode scrape remains independent of optional audio discovery.
