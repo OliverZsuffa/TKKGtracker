@@ -58,7 +58,7 @@ Relevant existing work:
 - [ ] The episode schema defines and validates an optional audio-release object containing Spotify album and YouTube Music playlist identifiers, canonical URLs, track counts, and verification metadata.
 - [ ] Automated discovery can find candidates for an episode without requiring a manually supplied playlist URL.
 - [ ] A candidate is marked verified only after strict episode identity and track-list checks pass.
-- [ ] Episode 150 is covered by a saved regression fixture representing the known Spotify album and official YouTube Music playlist, including the observed 40 playlist entries.
+- [ ] Episode 150 is covered by a saved regression fixture representing the known Spotify album and official YouTube Music playlist. The fixture records the 40 validated Spotify track records; the playlist's actual track count and sequence are independently retrieved and checked rather than assumed.
 - [ ] The inconsistent Spotify `tracks_count` value observed for episode 150 is not treated as authoritative when the actual returned track records establish a different count.
 - [ ] Ambiguous, incomplete, mismatched, private, unavailable, or failed candidates are reported and are not published as verified mappings.
 - [ ] Existing verified mappings survive refreshes when discovery fails or returns no candidate.
