@@ -24,12 +24,15 @@ Implemented on this request branch:
 - Updated README, project instructions, implementation plan, and knowledge base to document the new ownership and strict behaviour-preservation constraint.
 - No changes have been made to src/App.tsx, src/catalogue.ts, src/types.ts, src/storage.ts, src/styles.css, public/service-worker.js, or the progress storage format.
 
-Still pending:
-- Run the tracker CI against the now-published TKKGData main dataset.
-- Verify the production build and deployed PWA behaviour.
-- Only after successful verification, remove the old scraper, schema, Python dependencies, scraper-only tests, CSV, scrape report, and catalogue update workflow.
-- Keep data/episodes.json as a last-known-good local fallback and app build input.
-- Verify all changed files and prove that the UI and progress code are unchanged.
+Completed after the implementation notes above were first written:
+- Tracker CI run 42700950701 passed on main.
+- GitHub Pages deployment run 42700393538 completed successfully after fetching and validating all 243 TKKGData records.
+- The old scraper, source adapters, schema, Python dependencies, scraper-only tests, CSV, scrape report, and old catalogue update workflow were removed from TKKGTracker.
+- data/episodes.json remains only as a last-known-good local fallback and build input. Deployment refreshes it from TKKGData before building.
+- A commit comparison between the pre-migration main commit 531c305d4d3f3f725ad52582cf59148da8d805cd and migration commit aebed2ff7041d01ccceaa6e0fe9d139b427d00f0 confirms that no application source files under src/ changed.
+
+Still outstanding:
+- Manual browser and installed PWA checks for online refresh, progress preservation, and offline launch. These cannot be inferred from CI or a successful deployment.
 
 ## Test results
 
