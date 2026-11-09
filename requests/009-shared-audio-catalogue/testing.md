@@ -27,7 +27,7 @@ For each test, write the actual outcome in **Actual result / Oliver's notes**. T
 
 **Actual result / Oliver's notes:**
 
-First live dry-run in GitHub Actions installed FFmpeg and completed the spotDL Spotify lookup. It stopped before YouTube Music search because the returned Spotify track numbers did not form a complete unique sequence. A second diagnostic run is in progress to report the actual track numbers and disc numbers. No mapping was saved. The playlist ID has not yet been checked by the automated discovery run.
+The first live dry-run installed FFmpeg and completed Spotify lookup but failed the Spotify track-sequence check. A later run passed Spotify validation but returned no candidate because ytmusicapi album search results use an `MPRE...` album browse ID rather than an `OLAK...` playlist ID. The implementation now resolves the album browse ID with `get_album()` and retrieves its `audioPlaylistId`. A new live test is pending. No mapping has been saved yet.
 
 ---
 
