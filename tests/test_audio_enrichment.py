@@ -10,6 +10,7 @@ from scraper.audio_enrichment import (
     audio_release_coverage,
     enrich_catalogue,
     find_verified_youtube_music_playlist,
+    find_verified_youtube_music_tracks,
     preserve_verified_audio_releases,
     resolve_spotify_album,
 )
@@ -77,6 +78,19 @@ class FakeAlbumYTMusic(FakeYTMusic):
             "artists": [{"name": "TKKG"}],
             "audioPlaylistId": "OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI",
         }
+
+
+class FakeSongSearchYTMusic:
+    def __init__(self, candidates_by_title):
+        self.candidates_by_title = candidates_by_title
+        self.calls = []
+
+    def search(self, query, filter, limit):
+        self.calls.append((query, filter, limit))
+        if filter != "songs":
+            return []
+        return self.candidates_by_title.get(query, [])
+
 
 
 class AudioEnrichmentTests(unittest.TestCase):
@@ -208,19 +222,74 @@ class AudioEnrichmentTests(unittest.TestCase):
                     "source_query": "TKKG 150 Heiße Nächte im Dezember Teil 01",
                 },
                 "youtube_music": {
-                    "playlist_id": "OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI",
-                    "url": "https://music.youtube.com/playlist?list=OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI",
-                    "title": "150/Heiße Nächte im Dezember", "track_count": 2,
+                    "playlist": {
+                        "playlist_id": "OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI",
+                        "url": "https://music.youtube.com/playlist?list=OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI",
+                        "title": "150/Heiße Nächte im Dezember", "track_count": 2,
+                    },
+                    "tracks": [
+                        {"track_number": 1, "spotify_title": SPOTIFY["tracks"][0]["name"], "video_id": "videoid00001", "url": "https://music.youtube.com/watch?v=videoid00001", "title": SPOTIFY["tracks"][0]["name"], "artists": ["TKKG"], "album": "150/Heiße Nächte im Dezember", "duration_seconds": 120, "match_score": 140, "match_evidence": ["exact_normalised_title", "episode_album"]},
+                        {"track_number": 2, "spotify_title": SPOTIFY["tracks"][1]["name"], "video_id": "videoid00002", "url": "https://music.youtube.com/watch?v=videoid00002", "title": SPOTIFY["tracks"][1]["name"], "artists": ["TKKG"], "album": "150/Heiße Nächte im Dezember", "duration_seconds": 120, "match_score": 140, "match_evidence": ["exact_normalised_title", "episode_album"]},
+                    ],
+                    "track_count": 2,
                 },
                 "verification": {
                     "status": "verified", "verified_at": "2026-11-09T00:00:00Z",
                     "method": "test", "matched_track_count": 2,
+                    "playlist_status": "verified", "playlist_error": None,
                 },
             },
         }
         self.assertEqual(validate_catalogue([episode]), [])
         episode["audio_release"]["youtube_music"]["track_count"] = 3
         self.assertTrue(any("track counts differ" in error for error in validate_catalogue([episode])))
+
+
+    def test_individual_song_links_are_resolved_with_album_evidence(self):
+        candidates = {
+            track["name"]: [{
+                "videoId": f"videoid{index:04d}",
+                "title": track["name"],
+                "artists": [{"name": "Europa"}],
+                "album": {"name": SPOTIFY["title"]},
+                "duration_seconds": 120,
+            }]
+            for index, track in enumerate(SPOTIFY["tracks"], start=1)
+        }
+        result = find_verified_youtube_music_tracks(
+            EPISODE, SPOTIFY, FakeSongSearchYTMusic(candidates),
+        )
+        self.assertEqual(len(result), 2)
+        self.assertTrue(all(item["url"].startswith("https://music.youtube.com/watch?v=") for item in result))
+        self.assertTrue(all("episode_album" in item["match_evidence"] for item in result))
+
+    def test_individual_song_search_rejects_uncorroborated_exact_title(self):
+        candidates = {
+            SPOTIFY["tracks"][0]["name"]: [{
+                "videoId": "videoid00001",
+                "title": SPOTIFY["tracks"][0]["name"],
+                "artists": [{"name": "Unknown"}],
+                "album": {"name": "Unrelated album"},
+            }]
+        }
+        with self.assertRaisesRegex(ValueError, "No sufficiently corroborated"):
+            find_verified_youtube_music_tracks(
+                EPISODE, SPOTIFY, FakeSongSearchYTMusic(candidates),
+            )
+
+    def test_individual_song_search_rejects_ambiguous_matches(self):
+        title = SPOTIFY["tracks"][0]["name"]
+        candidates = {
+            title: [
+                {"videoId": "videoid00001", "title": title, "artists": [{"name": "TKKG"}]},
+                {"videoId": "videoid00002", "title": title, "artists": [{"name": "TKKG"}]},
+            ]
+        }
+        with self.assertRaisesRegex(ValueError, "Ambiguous YouTube Music song match"):
+            find_verified_youtube_music_tracks(
+                EPISODE, SPOTIFY, FakeSongSearchYTMusic(candidates),
+            )
+
 
     def test_latest_first_batch_selects_highest_missing_episode_numbers(self):
         episodes = [
