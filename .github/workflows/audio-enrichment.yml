@@ -31,7 +31,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: tkkg-audio-enrichment
+  group: tkkg-audio-enrichment-v2
   cancel-in-progress: false
 
 jobs:
