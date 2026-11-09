@@ -1,48 +1,50 @@
 # Testing plan: Request 010
 
-**Status:** Planned only. No implementation or test execution has started.
+**Status:** Automated integration checks are running. Browser and installed-PWA checks remain manual.
 
-## Contract tests
-1. Load a valid TKKGData fixture.
-   Expected: all supported episode records parse and render.
-2. Load an unsupported schema version.
-   Expected: the response is rejected and the previous cached dataset remains intact.
-3. Load malformed JSON or records missing required fields.
-   Expected: the response is rejected without replacing the cache.
-4. Simulate network failure after a successful load.
-   Expected: the app uses the last-known-good dataset.
-5. Simulate network failure before the first successful load.
-   Expected: the app displays a clear recoverable empty/error state.
+## Dataset synchronization
+1. Run node --check scripts/sync-catalogue.mjs.
+   Expected: the sync script parses successfully.
+2. Run npm run sync:data.
+   Expected: TKKGData metadata and episode JSON are fetched and validated, and data/episodes.json is updated only after both are valid.
+3. Test an unsupported schema version, count mismatch, duplicate number, numbering gap, missing title, and missing UI-required array.
+   Expected: the script fails without replacing the existing local fallback.
+4. Simulate a temporary 404 or server error.
+   Expected: bounded retries occur, then a clear failure if the source remains unavailable.
 
-## Progress preservation
-1. Export progress before migration.
-   Expected: export includes all current user progress and preferences.
-2. Load the migrated app using the same browser storage.
-   Expected: listened status, ratings, notes, favourites, and settings remain unchanged.
+## Tracker regression
+1. Compare the built app's catalogue URL before and after migration.
+   Expected: the runtime URL remains the same-origin data/episodes.json.
+2. Verify src/App.tsx, src/catalogue.ts, src/types.ts, src/storage.ts, src/styles.css, and public/service-worker.js are unchanged.
+   Expected: no app behaviour code changes.
+3. Run npm run typecheck, npm test, and npm run build after the dataset sync.
+   Expected: all pass.
+
+## Personal progress preservation
+1. Export progress before deploying the migration.
+   Expected: the existing tkkgtracker-progress.json format is unchanged.
+2. Load the new build in the same browser profile.
+   Expected: listened status, ratings, notes, and settings remain unchanged.
 3. Import a pre-migration export.
-   Expected: all records map to the same episodes.
-4. Test any changed episode ID mapping.
-   Expected: no progress record is silently dropped or assigned to a different episode.
+   Expected: all records map to the same episode numbers.
 
-## PWA and runtime
+## PWA and offline behaviour
 1. Load the deployed app online.
-   Expected: TKKGData fetch succeeds from the deployed origin.
-2. Publish a newer compatible dataset.
-   Expected: app refresh retrieves it and keeps user progress.
+   Expected: the same-origin catalogue loads successfully.
+2. Install or update the PWA.
+   Expected: installation and launch behave as before.
 3. Go offline and relaunch the installed PWA.
    Expected: app shell and last-known-good catalogue remain available.
 4. Return online and refresh.
-   Expected: the newest valid dataset is adopted.
+   Expected: the deployed latest catalogue is loaded without reinstalling the app.
 
-## Regression
-1. Test search, filters, episode detail, sorting, and all existing catalogue views.
-   Expected: behaviour remains unchanged.
-2. Test episodes with missing optional metadata.
-   Expected: no UI crash or misleading placeholder.
-3. Run npm run typecheck, npm test, and npm run build.
-   Expected: all pass.
-4. Confirm no active tracker workflow performs source scraping or audio enrichment.
-   Expected: shared data maintenance exists only in TKKGData.
+## Repository ownership
+1. Search production workflows and code for source scraping or audio discovery.
+   Expected: none remains in TKKGTracker.
+2. Confirm TKKGData owns the schema, scraper, source adapters, enrichment, and catalogue publication.
+   Expected: TKKGTracker is a read-only consumer.
 
 ## Actual observations
-Record Oliver's browser and device observations here without overwriting earlier results.
+- TKKGData synchronization succeeded in GitHub Actions run 42698341703.
+- npm 10.9.9 failed during dependency installation with the known edgesOut error. The workflow was updated to install npm 11 before dependency installation. Final CI result is pending.
+- Browser progress, installed-PWA, and offline checks have not been performed in this environment.
