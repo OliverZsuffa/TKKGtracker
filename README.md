@@ -47,3 +47,29 @@ Reusable project architecture and lessons belong in docs/knowledge/. Read the pr
 ## Current status
 
 Request 001 contains the approved plan for the catalogue scraper and listening tracker. See requests/001-tkkg-catalogue-listening-tracker/.
+
+## Shared audio source catalogue
+
+The scraper can optionally enrich episodes with verified Spotify album and YouTube Music playlist identifiers. The published `data/episodes.json` remains the canonical dataset. The normal catalogue refresh preserves previously verified audio mappings when an audio provider is unavailable.
+
+Audio discovery uses optional dependencies:
+
+    pip install -r requirements.txt
+    pip install -r requirements-audio.txt
+
+Run a dry-run discovery for episode 150:
+
+    python -m scraper.audio_enrichment --episode 150
+
+Discover up to five episodes that do not yet have verified mappings:
+
+    python -m scraper.audio_enrichment --limit 5
+
+Write only verified results to the central JSON and CSV catalogue:
+
+    python -m scraper.audio_enrichment --episode 150 --write
+
+The default is dry-run. Discovery uses spotDL for Spotify metadata and the unofficial `ytmusicapi` client for public YouTube Music search and playlist metadata. Public unauthenticated access is attempted; no account cookies or credentials are stored. Provider failures and ambiguous matches are reported and do not create mappings.
+
+A manual GitHub Actions workflow is available under Actions → Discover TKKG audio sources. It defaults to episode 150 in dry-run mode. Enable the write input only after reviewing the report.
+
