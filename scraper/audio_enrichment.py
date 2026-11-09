@@ -13,6 +13,8 @@ from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from scraper.export import write_catalogue
 from urllib.parse import urlencode
 
 
@@ -385,10 +387,13 @@ def enrich_catalogue(
     report["coverage_after"] = audio_release_coverage(episodes)
     report["finished_at"] = datetime.now(timezone.utc).isoformat()
     if write and report["verified"]:
-        catalogue_path.write_text(
-            json.dumps(episodes, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
+        if catalogue_path.resolve() == CATALOGUE_PATH.resolve():
+            write_catalogue(episodes, DATA_DIR)
+        else:
+            catalogue_path.write_text(
+                json.dumps(episodes, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
         report["catalogue_updated"] = True
     return report
 
