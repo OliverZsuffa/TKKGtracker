@@ -141,13 +141,15 @@ def resolve_spotify_album(episode: dict[str, Any], work_dir: Path) -> dict[str, 
     }
 
 
-def _candidate_playlist_id(candidate: dict[str, Any]) -> str | None:
+def _candidate_source(candidate: dict[str, Any], filter_name: str) -> tuple[str, str] | None:
     playlist_id = candidate.get("playlistId")
     if isinstance(playlist_id, str) and playlist_id.startswith(("OLAK5uy_", "PL")):
-        return playlist_id
+        return "playlist", playlist_id
     browse_id = candidate.get("browseId")
     if isinstance(browse_id, str) and browse_id.startswith("VLPL"):
-        return browse_id[2:]
+        return "playlist", browse_id[2:]
+    if filter_name == "albums" and isinstance(browse_id, str) and browse_id.startswith("MPRE"):
+        return "album", browse_id
     return None
 
 
@@ -199,7 +201,7 @@ def find_verified_youtube_music_playlist(
         f"TKKG {number:03d} {title}",
         f"TKKG Folge {number} {title}",
     )
-    candidates: dict[str, dict[str, Any]] = {}
+    candidates: dict[str, tuple[str, str, dict[str, Any]]] = {}
     for query in queries:
         for filter_name in ("albums", "playlists"):
             try:
@@ -210,24 +212,39 @@ def find_verified_youtube_music_playlist(
             for result in results:
                 if not isinstance(result, dict):
                     continue
-                playlist_id = _candidate_playlist_id(result)
                 candidate_title = str(result.get("title") or "")
-                if not playlist_id or _normalise(title) not in _normalise(candidate_title):
+                if _normalise(title) not in _normalise(candidate_title):
                     continue
-                if playlist_id not in candidates and len(candidates) >= 8:
+                source = _candidate_source(result, filter_name)
+                if source is None:
                     continue
-                candidates.setdefault(playlist_id, result)
+                kind, source_id = source
+                key = f"{kind}:{source_id}"
+                if key not in candidates and len(candidates) < 8:
+                    candidates[key] = (kind, source_id, result)
 
     verified: dict[str, dict[str, Any]] = {}
     rejected: list[str] = []
-    print(f"YouTube Music search found {len(candidates)} title-matching candidate(s).", flush=True)
-    for playlist_id, candidate in candidates.items():
-        print(f"Checking YouTube Music candidate {playlist_id}...", flush=True)
+    for kind, source_id, candidate in candidates.values():
         try:
             time.sleep(0.35)
+            if kind == "album":
+                album = ytm.get_album(source_id)
+                if not isinstance(album, dict):
+                    rejected.append(f"{source_id}: malformed album response")
+                    continue
+                playlist_id = album.get("audioPlaylistId")
+                if not isinstance(playlist_id, str) or not playlist_id.startswith("OLAK5uy_"):
+                    rejected.append(f"{source_id}: album has no public audio playlist ID")
+                    continue
+                candidate = {**candidate, **album}
+            else:
+                playlist_id = source_id
+            if playlist_id in verified:
+                continue
             playlist = ytm.get_playlist(playlist_id, limit=None)
         except Exception as exc:
-            rejected.append(f"{playlist_id}: playlist retrieval failed: {exc}")
+            rejected.append(f"{source_id}: playlist or album retrieval failed: {exc}")
             continue
         if not isinstance(playlist, dict):
             rejected.append(f"{playlist_id}: malformed playlist response")
