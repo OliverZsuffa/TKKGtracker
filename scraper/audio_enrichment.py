@@ -284,13 +284,12 @@ def find_verified_youtube_music_playlist(
 
 
 def discover_episode_audio(episode: dict[str, Any], ytm: Any) -> dict[str, Any]:
-    from datetime import datetime, timezone
-
     with tempfile.TemporaryDirectory(prefix=f"tkkg_audio_{episode['number']:03d}_") as temp:
         spotify = resolve_spotify_album(episode, Path(temp))
     youtube_music = find_verified_youtube_music_playlist(episode, spotify, ytm)
+    ytm_playlist_tracks = youtube_music.pop("_matched_tracks")
     verified_at = datetime.now(timezone.utc).isoformat()
-    return {
+    audio_release = {
         "spotify": {
             "album_id": spotify["album_id"],
             "url": spotify["url"],
@@ -306,6 +305,11 @@ def discover_episode_audio(episode: dict[str, Any], ytm: Any) -> dict[str, Any]:
             "matched_track_count": spotify["track_count"],
         },
     }
+    matched_tracks = [
+        {"spotify_title": spotify_track["name"], "youtube_music_title": ytm_track["title"]}
+        for spotify_track, ytm_track in zip(spotify["tracks"], ytm_playlist_tracks, strict=True)
+    ]
+    return {"audio_release": audio_release, "matched_tracks": matched_tracks}
 
 
 def audio_release_coverage(episodes: list[dict[str, Any]]) -> dict[str, Any]:
@@ -396,7 +400,8 @@ def enrich_catalogue(
         number = episode.get("number")
         print(f"Discovering audio sources for episode {number}: {episode.get('title')}", flush=True)
         try:
-            audio_release = discover_episode_audio(episode, ytm)
+            discovery = discover_episode_audio(episode, ytm)
+            audio_release = discovery["audio_release"]
         except Exception as exc:
             report["failures"].append({
                 "number": number,
@@ -409,6 +414,7 @@ def enrich_catalogue(
             "number": number,
             "title": episode.get("title"),
             "audio_release": audio_release,
+            "matched_tracks": discovery["matched_tracks"],
         })
         print(
             f"  verified: Spotify {audio_release['spotify']['track_count']} tracks, "
