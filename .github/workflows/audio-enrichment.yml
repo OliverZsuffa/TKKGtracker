@@ -7,6 +7,8 @@ on:
       - "scraper/audio_enrichment.py"
       - "requirements-audio.txt"
       - ".github/workflows/audio-enrichment.yml"
+  schedule:
+    - cron: "0 6 * * 2"
   workflow_dispatch:
     inputs:
       episode:
@@ -58,8 +60,12 @@ jobs:
         run: |
           ARGS=(--limit "${INPUT_LIMIT:-5}")
           if [ "$EVENT_NAME" = "push" ]; then INPUT_EPISODE=150; fi
+          if [ "$EVENT_NAME" = "schedule" ]; then INPUT_WRITE=true; fi
           if [ -n "${INPUT_EPISODE:-}" ]; then
             ARGS+=(--episode "$INPUT_EPISODE")
+          fi
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            ARGS+=(--latest-first)
           fi
           if [ "$INPUT_WRITE" = "true" ]; then
             ARGS+=(--write)
@@ -74,7 +80,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
       - name: Commit verified catalogue updates
-        if: inputs.write == true && success()
+        if: success() && (inputs.write == true || github.event_name == 'schedule')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
