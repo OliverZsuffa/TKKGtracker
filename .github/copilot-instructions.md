@@ -26,9 +26,12 @@ Reusable architecture, patterns, and lessons belong in docs/knowledge/. Request-
 ## Project responsibilities
 - TKKGTracker is the user-facing listening tracker and PWA.
 - TKKGData is intended to own the canonical shared episode dataset, source scraping, enrichment, schema, validation, and publication.
-- Once request 010 is implemented, TKKGTracker must consume the published TKKGData dataset and must not maintain a competing catalogue or source scraper.
+- TKKGTracker consumes the published TKKGData dataset at build time. The app continues to load the same data/episodes.json URL from its own origin.
+- TKKGTracker must not maintain a competing catalogue or source scraper.
 - Listening progress, ratings, notes, favourites, and user settings remain local to the user's browser and must never be published to TKKGData.
 - Preserve last-known-good catalogue data for offline use and temporary network failures.
+- The TKKGData migration is a data ownership change only. Do not change tracker UI, search, filters, episode detail behaviour, progress storage, import/export formats, PWA installation, service worker, or offline behaviour.
+- Prefer build-time dataset synchronization over a browser runtime API change. Keep the existing same-origin data URL and cache behaviour.
 - Do not implement the consumer migration until TKKGData has an approved, published, validated data contract.
 - The current scraper and generated catalogue remain in place until the replacement is proven and the cutover is approved.
 
