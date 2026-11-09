@@ -5,6 +5,9 @@ on:
     branches: [feat/009-shared-audio-catalogue]
     paths:
       - "scraper/audio_enrichment.py"
+      - "tests/test_audio_enrichment.py"
+      - "schemas/episode.schema.json"
+      - "scraper/validate.py"
       - "scraper/audio_source_experiments.py"
       - "requirements-audio.txt"
       - ".github/workflows/audio-enrichment.yml"
