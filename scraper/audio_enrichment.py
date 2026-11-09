@@ -338,7 +338,7 @@ def _load_ytmusic() -> Any:
 def enrich_catalogue(
     episodes: list[dict[str, Any]], *, selected_numbers: set[int] | None = None,
     limit: int = 5, write: bool = False, ytm: Any = None,
-    catalogue_path: Path = CATALOGUE_PATH,
+    catalogue_path: Path = CATALOGUE_PATH, latest_first: bool = False,
 ) -> dict[str, Any]:
     if limit < 1:
         raise ValueError("limit must be at least 1.")
@@ -349,7 +349,10 @@ def enrich_catalogue(
             isinstance(item.get("audio_release"), dict)
             and item["audio_release"].get("verification", {}).get("status") == "verified"
         )
-    ][:limit]
+    ]
+    if latest_first:
+        targets.sort(key=lambda item: int(item.get("number", 0)), reverse=True)
+    targets = targets[:limit]
     report: dict[str, Any] = {
         "started_at": datetime.now(timezone.utc).isoformat(),
         "mode": "write" if write else "dry_run",
@@ -426,6 +429,7 @@ def main() -> int:
     parser.add_argument("--episode", type=int, action="append", help="Episode number to process; may be repeated.")
     parser.add_argument("--limit", type=int, default=5, help="Maximum number of missing episodes to process (default: 5).")
     parser.add_argument("--write", action="store_true", help="Save only successfully verified pairings to episodes.json. Default is dry-run.")
+    parser.add_argument("--latest-first", action="store_true", help="Process the highest-numbered missing episodes first.")
     parser.add_argument("--catalogue", type=Path, default=CATALOGUE_PATH, help="Path to the episode JSON catalogue.")
     parser.add_argument("--report", type=Path, default=REPORT_PATH, help="Path for the JSON run report.")
     args = parser.parse_args()
@@ -442,6 +446,7 @@ def main() -> int:
             limit=args.limit,
             write=args.write,
             catalogue_path=args.catalogue,
+            latest_first=args.latest_first,
         )
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
