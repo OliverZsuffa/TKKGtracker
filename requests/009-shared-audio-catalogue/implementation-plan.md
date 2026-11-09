@@ -1,6 +1,6 @@
 # Implementation plan: Shared TKKG audio catalogue
 
-**Status:** Proposed; awaiting Oliver's explicit approval. Planning only. Do not implement before approval.
+**Status:** Approved by Oliver on 9 November 2026. Implementation is in progress on feat/009-shared-audio-catalogue.
 
 ## 1. Baseline and constraints
 
