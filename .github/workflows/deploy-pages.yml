@@ -10,9 +10,8 @@ on:
       - "README.md"
       - ".github/copilot-instructions.md"
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Update episode catalogue"]
-    types: [completed]
+  schedule:
+    - cron: "0 7 * * 2"
 
 permissions:
   contents: read
@@ -25,7 +24,6 @@ concurrency:
 
 jobs:
   build:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -34,11 +32,17 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: "22"
+      - name: Validate TKKGData sync script
+        run: node --check scripts/sync-catalogue.mjs
+      - name: Fetch and validate the canonical TKKGData dataset
+        run: npm run sync:data
+      - name: Use current npm release
+        run: npm install --global npm@11
       - run: npm install
       - run: npm audit --audit-level=high
       - run: npm run typecheck
       - run: npm test
-      - name: Include generated catalogue as a runtime resource
+      - name: Include canonical catalogue as a same-origin runtime resource
         run: mkdir -p public/data && cp data/episodes.json public/data/episodes.json
       - run: npm run build
       - uses: actions/upload-pages-artifact@v4
@@ -46,7 +50,6 @@ jobs:
           path: dist
 
   deploy:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

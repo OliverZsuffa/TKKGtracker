@@ -10,10 +10,12 @@ Every substantial change is tracked in its own request folder.
 5. Implement only the approved scope on a focused branch.
 6. Run relevant checks, review the diff, and document actual outcomes.
 7. Leave the request ready for Oliver's review. Do not mark it complete on his behalf.
+8. Merge only after verification and Oliver's explicit approval.
 
 ## Request index
 
-- [009: Shared TKKG audio catalogue](009-shared-audio-catalogue/request.md) — central Spotify album and YouTube Music playlist data for downstream TKKG tools.
+- [010: Make TKKGTracker a TKKGData consumer](010-tkkgdata-consumer/request.md) — consume the shared dataset at build time while preserving all tracker behaviour.
+- [009: Shared TKKG audio catalogue](009-shared-audio-catalogue/request.md) — historical request transferred to TKKGData. Its implementation and research now live in the TKKGData repository.
 - [008: Installable PWA](008-installable-pwa/request.md)
 - [008: Clean progress export](008-clean-progress-export/request.md)
 - [007: Episode streaming links](007-streaming-links/request.md)

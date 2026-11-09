@@ -18,6 +18,17 @@ Keep the existing `episodes.json` as the canonical shared dataset. Add an option
 
 The TKKGtracker request will define and publish the data contract. TKKGDownloader will consume it read-only in a separate coordinated request after the contract is implemented.
 
-## Status
+## Transfer status
 
-Planning only. No scraper code, schema, generated data, workflow, or downloader code has been changed.
+The useful implementation and research from this request were transferred to TKKGData as part of its initial migration on 2026-11-09:
+- scraper/audio_enrichment.py
+- scraper/audio_source_experiments.py
+- tests/test_audio_enrichment.py
+- requirements-audio.txt
+- the optional audio_release schema and validation
+- audio source knowledge documentation
+- the audio enrichment GitHub Actions workflow
+
+The transferred implementation stores verified individual YouTube Music song URLs and an optional verified playlist URL alongside Spotify album metadata. It remains in TKKGData. The old TKKGTracker draft PR #14 is being closed and must not be merged into this repository.
+
+TKKGTracker no longer owns or runs audio discovery. TKKGDownloader's consumer migration is tracked in its own request 004.
