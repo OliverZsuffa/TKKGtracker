@@ -56,7 +56,7 @@ def validate_catalogue(episodes: list[dict], schema_path: Path | None = None) ->
                     youtube_music.get("track_count"),
                     verification.get("matched_track_count"),
                 )
-                if len(set(counts)) != 1:
+                if any(not isinstance(count, int) for count in counts) or len(set(counts)) != 1:
                     errors.append(f"episode {episode.get('number')}: verified Spotify, YouTube Music, and matched track counts differ")
 
         number = episode.get("number")
