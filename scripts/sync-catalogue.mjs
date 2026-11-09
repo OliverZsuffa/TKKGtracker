@@ -9,12 +9,24 @@ const metadataUrl = process.env.TKKGDATA_METADATA_URL
   ?? "https://raw.githubusercontent.com/OliverZsuffa/TKKGData/main/data/dataset-metadata.json";
 
 async function fetchJson(url, label) {
-  const response = await fetch(url, { cache: "no-store" });
-  if (!response.ok) {
-    throw new Error(`Could not fetch ${label}: HTTP ${response.status} from ${url}`);
+  let lastError;
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    try {
+      const response = await fetch(url, { cache: "no-store" });
+      if (response.ok) {
+        const text = await response.text();
+        return { text, value: JSON.parse(text) };
+      }
+      lastError = new Error(`Could not fetch ${label}: HTTP ${response.status} from ${url}`);
+      if (response.status < 500 && response.status !== 404) throw lastError;
+    } catch (error) {
+      lastError = error;
+    }
+    if (attempt < 4) {
+      await new Promise((resolve) => setTimeout(resolve, attempt * 1500));
+    }
   }
-  const text = await response.text();
-  return { text, value: JSON.parse(text) };
+  throw lastError ?? new Error(`Could not fetch ${label} from ${url}`);
 }
 
 const [{ text: datasetText, value: episodes }, { value: metadata }] = await Promise.all([
