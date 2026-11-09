@@ -334,6 +334,7 @@ def _load_ytmusic() -> Any:
 def enrich_catalogue(
     episodes: list[dict[str, Any]], *, selected_numbers: set[int] | None = None,
     limit: int = 5, write: bool = False, ytm: Any = None,
+    catalogue_path: Path = CATALOGUE_PATH,
 ) -> dict[str, Any]:
     if limit < 1:
         raise ValueError("limit must be at least 1.")
@@ -384,8 +385,8 @@ def enrich_catalogue(
     report["coverage_after"] = audio_release_coverage(episodes)
     report["finished_at"] = datetime.now(timezone.utc).isoformat()
     if write and report["verified"]:
-        CATALOGUE_PATH.write_text(
-            json.dumps(episodes, ensure_ascii=False, indent=2) + "\\n",
+        catalogue_path.write_text(
+            json.dumps(episodes, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
         report["catalogue_updated"] = True
@@ -414,6 +415,7 @@ def main() -> int:
             selected_numbers=set(args.episode) if args.episode else None,
             limit=args.limit,
             write=args.write,
+            catalogue_path=args.catalogue,
         )
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
