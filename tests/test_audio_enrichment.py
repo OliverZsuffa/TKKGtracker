@@ -114,6 +114,20 @@ class AudioEnrichmentTests(unittest.TestCase):
             "OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI",
         )
 
+    def test_explicit_playlist_id_can_be_verified_without_search(self):
+        ytm = FakeYTMusic(["OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI"])
+        result = find_verified_youtube_music_playlist(
+            EPISODE,
+            SPOTIFY,
+            ytm,
+            "OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI",
+        )
+        self.assertEqual(
+            result["playlist_id"],
+            "OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI",
+        )
+        self.assertEqual(ytm.search_calls, [])
+
     def test_wrong_track_list_is_rejected(self):
         ytm = FakeYTMusic(tracks=[
             {"title": "150 - Heiße Nächte im Dezember - Teil 01", "artists": [{"name": "TKKG"}]},
