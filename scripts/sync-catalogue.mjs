@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -13,7 +13,8 @@ async function fetchJson(url, label) {
   if (!response.ok) {
     throw new Error(`Could not fetch ${label}: HTTP ${response.status} from ${url}`);
   }
-  return { text: await response.text(), value: JSON.parse(await response.clone().text()) };
+  const text = await response.text();
+  return { text, value: JSON.parse(text) };
 }
 
 const [{ text: datasetText, value: episodes }, { value: metadata }] = await Promise.all([
@@ -58,6 +59,5 @@ for (let index = 1; index < numbers.length; index += 1) {
 }
 
 const destination = path.join(repositoryRoot, "data", "episodes.json");
-await readFile(destination);
 await writeFile(destination, datasetText.endsWith("\n") ? datasetText : datasetText + "\n", "utf8");
 console.log(`Synchronized ${episodes.length} TKKG episodes from TKKGData (schema ${metadata.schema_version}, dataset ${metadata.dataset_version}).`);
