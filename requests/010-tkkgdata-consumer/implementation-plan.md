@@ -33,16 +33,15 @@ TKKGTracker does not own:
 5. Record the current local progress schema and ensure episode IDs can be mapped without losing data.
 6. Audit request 009, its feature branch, draft PR #14, audio enrichment scripts, and workflows. Identify code and fixtures to migrate to TKKGData. Do not merge PR #14 into TKKGTracker.
 
-## 4. Runtime data client
-1. Add one small catalogue client responsible for fetching the TKKGData latest endpoint.
-2. Validate the dataset metadata and supported schema version before parsing episode records.
-3. Validate required record fields and stable episode identifiers.
-4. Normalize the remote contract into the minimal app-facing view model if needed. This view model is runtime transformation, not a maintained second catalogue.
-5. Store the last-known-good dataset in the existing browser cache mechanism or a clearly defined versioned cache.
-6. Replace the cached copy only after a complete successful fetch and validation.
-7. On network failure, use the last-known-good copy and clearly handle the absence of any prior cache.
-8. Reject incompatible future schema versions without destroying cached data.
-9. Do not silently fall back to a stale bundled catalogue after the new contract is live.
+## 4. Build-time dataset integration
+1. Keep the existing app-facing data/episodes.json path and the existing Episode array shape.
+2. Add a Node-only sync script that fetches TKKGData data/episodes.json and data/dataset-metadata.json during deployment and on explicit local sync.
+3. Validate schema version 1.x, metadata episode count, non-empty dataset, unique contiguous episode numbers, titles, and every array field currently consumed by the UI.
+4. Write the downloaded JSON to the existing data/episodes.json build input only after both remote files have been fetched and validated completely.
+5. Keep the existing local data/episodes.json as a last-known-good development fallback if the sync command is not run.
+6. Continue copying data/episodes.json into public/data/episodes.json during deployment. The app therefore continues fetching the catalogue from the same origin and same URL as before.
+7. Do not change src/App.tsx, src/catalogue.ts, src/types.ts, src/storage.ts, public/service-worker.js, or UI styling as part of this migration.
+8. This build-time approach avoids runtime CORS dependencies and preserves the current service-worker cache behaviour. No remote data client or new browser cache is introduced.
 
 ## 5. Preserve user data
 1. Keep progress storage separate from the remote dataset.
