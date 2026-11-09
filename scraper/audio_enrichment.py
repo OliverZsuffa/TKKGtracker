@@ -10,6 +10,7 @@ import tempfile
 import time
 import unicodedata
 from copy import deepcopy
+from functools import partial
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -351,12 +352,15 @@ def preserve_verified_audio_releases(
 
 def _load_ytmusic() -> Any:
     try:
+        import requests
         from ytmusicapi import YTMusic
     except ImportError as exc:
         raise RuntimeError(
             "ytmusicapi is not installed. Install requirements-audio.txt first."
         ) from exc
-    return YTMusic()
+    session = requests.Session()
+    session.request = partial(session.request, timeout=20)
+    return YTMusic(requests_session=session)
 
 
 def enrich_catalogue(
