@@ -118,7 +118,7 @@ The first live dry-run installed FFmpeg and completed Spotify lookup but failed 
 
 ## General notes / ideas / outstanding issues
 
-- Python unit tests: 50 passed on the implementation branch.
+- Python unit tests: 52 passed on the latest implementation branch run.
 - Frontend CI is currently blocked at `npm install` by npm 10.9.9 throwing `Cannot read properties of null (reading 'edgesOut')`. Frontend typecheck, tests, and build have not run in those CI attempts.
 - The live discovery process must resolve the Spotify track-number discrepancy before YouTube Music playlist matching can be assessed.
 
