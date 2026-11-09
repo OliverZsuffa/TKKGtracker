@@ -28,8 +28,9 @@ SPOTIFY = {
 
 
 class FakeYTMusic:
-    def __init__(self, playlist_ids=None, tracks=None):
+    def __init__(self, playlist_ids=None, tracks=None, candidate_artist='TKKG'):
         self.playlist_ids = playlist_ids or ["OLAK5uy_example123"]
+        self.candidate_artist = candidate_artist
         self.tracks = tracks or [
             {"title": "150 - Heiße Nächte im Dezember - Teil 01", "artists": [{"name": "TKKG"}]},
             {"title": "150 - Heiße Nächte im Dezember - Teil 02", "artists": [{"name": "TKKG"}]},
@@ -43,7 +44,7 @@ class FakeYTMusic:
                 "resultType": "album",
                 "playlistId": playlist_id,
                 "title": "150/Heiße Nächte im Dezember",
-                "artist": "TKKG",
+                "artist": self.candidate_artist,
             }
             for playlist_id in self.playlist_ids
         ] if filter == "albums" else []
@@ -89,7 +90,7 @@ class AudioEnrichmentTests(unittest.TestCase):
             {"title": item["name"], "artists": [{"name": "Unknown Artist"}]}
             for item in SPOTIFY["tracks"]
         ]
-        ytm = FakeYTMusic(tracks=tracks)
+        ytm = FakeYTMusic(tracks=tracks, candidate_artist="Unknown Artist")
         with self.assertRaisesRegex(ValueError, "No verified YouTube Music playlist"):
             find_verified_youtube_music_playlist(EPISODE, SPOTIFY, ytm)
 
