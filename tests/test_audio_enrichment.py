@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from scraper.audio_enrichment import (
+    _candidate_source,
     _track_titles_match,
     audio_release_coverage,
     enrich_catalogue,
@@ -79,6 +80,16 @@ class FakeAlbumYTMusic(FakeYTMusic):
 
 
 class AudioEnrichmentTests(unittest.TestCase):
+    def test_official_audio_playlist_browse_id_is_recognized(self):
+        source = _candidate_source(
+            {"browseId": "VLOLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI"},
+            "playlists",
+        )
+        self.assertEqual(
+            source,
+            ("playlist", "OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI"),
+        )
+
     def test_track_lists_must_match_exactly_in_order(self):
         self.assertTrue(_track_titles_match(SPOTIFY["tracks"], FakeYTMusic().tracks))
         reversed_tracks = list(reversed(FakeYTMusic().tracks))
