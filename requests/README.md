@@ -11,10 +11,17 @@ Every substantial change is tracked in its own request folder.
 6. Run relevant checks, review the diff, and document actual outcomes.
 7. Leave the request ready for Oliver's review. Do not mark it complete on his behalf.
 
+## Request index
+
+- [009: Shared TKKG audio catalogue](009-shared-audio-catalogue/request.md) — central Spotify album and YouTube Music playlist data for downstream TKKG tools.
+- [008: Installable PWA](008-installable-pwa/request.md)
+- [008: Clean progress export](008-clean-progress-export/request.md)
+- [007: Episode streaming links](007-streaming-links/request.md)
+
 ## Request contents
 - request.md: desired outcome, scope, and acceptance criteria.
 - implementation-plan.md: technical approach and verification plan.
-- testing.md: concrete manual steps and expected results. Oliver records actual results and notes.
+- testing.md: concrete manual tests and expected results. Oliver records actual results and notes.
 - notes.md: implementation outcome, checks actually run, and remaining work.
 - attachments/: reference files when needed.
 
