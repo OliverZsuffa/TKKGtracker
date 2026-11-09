@@ -57,6 +57,27 @@ class FakeYTMusic:
         }
 
 
+class FakeAlbumYTMusic(FakeYTMusic):
+    def search(self, query, filter, limit):
+        self.search_calls.append((query, filter, limit))
+        if filter == "albums":
+            return [{
+                "resultType": "album",
+                "browseId": "MPREb_example",
+                "title": "150/Heiße Nächte im Dezember",
+                "artists": [{"name": "TKKG"}],
+            }]
+        return []
+
+    def get_album(self, browse_id):
+        self.asserted_browse_id = browse_id
+        return {
+            "title": "150/Heiße Nächte im Dezember",
+            "artists": [{"name": "TKKG"}],
+            "audioPlaylistId": "OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI",
+        }
+
+
 class AudioEnrichmentTests(unittest.TestCase):
     def test_track_lists_must_match_exactly_in_order(self):
         self.assertTrue(_track_titles_match(SPOTIFY["tracks"], FakeYTMusic().tracks))
@@ -72,6 +93,15 @@ class AudioEnrichmentTests(unittest.TestCase):
         )
         self.assertEqual(result["track_count"], 2)
         self.assertTrue(result["url"].endswith("OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI"))
+
+    def test_album_search_browse_id_resolves_to_audio_playlist(self):
+        ytm = FakeAlbumYTMusic(["OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI"])
+        result = find_verified_youtube_music_playlist(EPISODE, SPOTIFY, ytm)
+        self.assertEqual(ytm.asserted_browse_id, "MPREb_example")
+        self.assertEqual(
+            result["playlist_id"],
+            "OLAK5uy_mQRbJNANh1H4CKbmM5ez5LSW1HJFvE3QI",
+        )
 
     def test_wrong_track_list_is_rejected(self):
         ytm = FakeYTMusic(tracks=[
