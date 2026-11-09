@@ -1,6 +1,6 @@
 # Implementation plan: Make TKKGTracker a TKKGData consumer
 
-**Status:** Approved by Oliver on 2026-11-09. Implementation in progress. Strict no-functionality-change constraint.
+**Status:** Implemented and merged to main. CI and GitHub Pages deployment passed. Manual browser and installed PWA verification remains outstanding.
 
 ## 1. Preconditions
 1. Read TKKGData request 001 and the approved schema and consumer documentation.
