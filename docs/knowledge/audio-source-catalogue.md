@@ -18,7 +18,7 @@ The three track counts must agree. IDs must agree with their corresponding URLs.
 
 Run `python -m scraper.audio_enrichment --episode 150` for a dry run. Use `--write` only when verified results should be written to `data/episodes.json` and `data/episodes.csv`. Without an episode selector, `--limit N` processes at most N episodes that do not already have verified audio metadata.
 
-Spotify metadata is resolved using spotDL's metadata save operation. YouTube Music candidates are searched using `ytmusicapi`, then their public playlist track lists are retrieved. A result is rejected if the title, TKKG artist evidence, track count, or ordered track titles do not match. Multiple fully matching candidates are treated as ambiguous.
+Spotify metadata is resolved using spotDL's metadata save operation. YouTube Music candidates are searched using `ytmusicapi`. Album search results can expose an `MPRE...` browse ID; resolve these with `get_album()` and use the returned `audioPlaylistId` when available. Playlist results may expose an `OLAK...` ID directly or through a `VLOLAK...` browse ID. Their public playlist track lists are then retrieved. A result is rejected if the title, TKKG artist evidence, track count, or ordered track titles do not match. Multiple fully matching candidates are treated as ambiguous.
 
 The current matching rule is intentionally conservative. It does not attempt fuzzy matching, alternate-edition selection, or automatic acceptance of bonus tracks. Such episodes remain unresolved for review.
 
