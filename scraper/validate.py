@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import re
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 from pathlib import Path
 
 from jsonschema import Draft202012Validator, FormatChecker
@@ -36,6 +36,28 @@ def validate_catalogue(episodes: list[dict], schema_path: Path | None = None) ->
                     f"episode {episode.get('number')} physical release {release_index}: "
                     "EAN contains no plausible 8–14 digit identifier"
                 )
+
+        audio_release = episode.get("audio_release")
+        if isinstance(audio_release, dict):
+            spotify = audio_release.get("spotify")
+            youtube_music = audio_release.get("youtube_music")
+            verification = audio_release.get("verification")
+            if isinstance(spotify, dict) and isinstance(youtube_music, dict) and isinstance(verification, dict):
+                spotify_id = spotify.get("album_id")
+                spotify_path_id = urlparse(str(spotify.get("url", ""))).path.rstrip("/").split("/")[-1]
+                if spotify_id != spotify_path_id:
+                    errors.append(f"episode {episode.get('number')}: Spotify album ID does not match its URL")
+                ytm_id = youtube_music.get("playlist_id")
+                ytm_query_id = parse_qs(urlparse(str(youtube_music.get("url", ""))).query).get("list", [None])[0]
+                if ytm_id != ytm_query_id:
+                    errors.append(f"episode {episode.get('number')}: YouTube Music playlist ID does not match its URL")
+                counts = (
+                    spotify.get("track_count"),
+                    youtube_music.get("track_count"),
+                    verification.get("matched_track_count"),
+                )
+                if len(set(counts)) != 1:
+                    errors.append(f"episode {episode.get('number')}: verified Spotify, YouTube Music, and matched track counts differ")
 
         number = episode.get("number")
         title = episode.get("title")
