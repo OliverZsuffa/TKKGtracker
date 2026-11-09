@@ -7,6 +7,7 @@ from unittest.mock import patch
 from scraper.audio_enrichment import (
     _track_titles_match,
     audio_release_coverage,
+    enrich_catalogue,
     find_verified_youtube_music_playlist,
     preserve_verified_audio_releases,
     resolve_spotify_album,
@@ -165,6 +166,24 @@ class AudioEnrichmentTests(unittest.TestCase):
         self.assertEqual(validate_catalogue([episode]), [])
         episode["audio_release"]["youtube_music"]["track_count"] = 3
         self.assertTrue(any("track counts differ" in error for error in validate_catalogue([episode])))
+
+    def test_latest_first_batch_selects_highest_missing_episode_numbers(self):
+        episodes = [
+            {"number": 1, "title": "One"},
+            {"number": 2, "title": "Two"},
+            {"number": 3, "title": "Three"},
+        ]
+        fake_release = {
+            "spotify": {"track_count": 1},
+            "youtube_music": {"playlist_id": "OLAK5uy_example123"},
+            "verification": {"status": "verified"},
+        }
+        with patch(
+            "scraper.audio_enrichment.discover_episode_audio",
+            return_value=fake_release,
+        ):
+            report = enrich_catalogue(episodes, limit=2, latest_first=True, ytm=object())
+        self.assertEqual([item["number"] for item in report["verified"]], [3, 2])
 
     def test_coverage_counts_verified_and_missing_records(self):
         episodes = [
