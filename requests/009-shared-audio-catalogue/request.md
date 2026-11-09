@@ -1,7 +1,7 @@
 # Request 009: Shared TKKG audio catalogue
 
 ## Status
-Awaiting approval. Planning only. No scraper, schema, catalogue, or downloader implementation is authorized yet.
+Approved. Implementation is in progress on feat/009-shared-audio-catalogue.
 
 ## Desired outcome
 Create one central, machine-readable TKKG dataset in TKKGtracker that records verified Spotify album and YouTube Music playlist identifiers for each regular main-series episode. TKKGtracker discovers and maintains this information. TKKGDownloader and future tools consume the published dataset instead of maintaining their own independent episode-to-playlist mappings or repeatedly searching for sources.
