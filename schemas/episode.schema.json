@@ -445,6 +445,18 @@
             "matched_track_count": {
               "type": "integer",
               "minimum": 1
+            },
+            "playlist_status": {
+              "enum": [
+                "verified",
+                "unavailable"
+              ]
+            },
+            "playlist_error": {
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
           "additionalProperties": false
