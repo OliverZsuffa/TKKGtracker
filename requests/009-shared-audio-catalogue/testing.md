@@ -27,7 +27,7 @@ For each test, write the actual outcome in **Actual result / Oliver's notes**. T
 
 **Actual result / Oliver's notes:**
 
-The first live dry-run installed FFmpeg and completed Spotify lookup but failed the Spotify track-sequence check. A later run passed Spotify validation but returned no candidate because ytmusicapi album search results use an `MPRE...` album browse ID rather than an `OLAK...` playlist ID. The implementation now resolves the album browse ID with `get_album()` and retrieves its `audioPlaylistId`. A new live test is pending. No mapping has been saved yet.
+The first live dry-run installed FFmpeg and completed Spotify lookup but failed the Spotify track-sequence check. A later run passed Spotify validation, found an `MPRE...` YouTube Music album result, but `get_album()` returned no `audioPlaylistId`. The implementation now recognizes `audioPlaylistId` directly in search results, recognizes `VLOLAK5uy_...` browse IDs, and searches an additional episode-number-plus-title query. Another live dry-run is pending. No mapping has been saved yet.
 
 ---
 
