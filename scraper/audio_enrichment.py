@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 CATALOGUE_PATH = DATA_DIR / "episodes.json"
 REPORT_PATH = DATA_DIR / "audio-enrichment-report.json"
+SCRAPE_REPORT_PATH = DATA_DIR / "scrape-report.json"
 YTM_BASE = "https://music.youtube.com/playlist?"
 SPOTIFY_ALBUM_BASE = "https://open.spotify.com/album/"
 SPOTDL_TIMEOUT_SECONDS = 180
@@ -442,8 +443,8 @@ def enrich_catalogue(
         if catalogue_path.resolve() == CATALOGUE_PATH.resolve():
             scrape_report = {}
             try:
-                if REPORT_PATH.exists():
-                    loaded_report = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
+                if SCRAPE_REPORT_PATH.exists():
+                    loaded_report = json.loads(SCRAPE_REPORT_PATH.read_text(encoding="utf-8"))
                     if isinstance(loaded_report, dict):
                         scrape_report = loaded_report
             except (OSError, json.JSONDecodeError):
@@ -454,7 +455,7 @@ def enrich_catalogue(
                 "verified_count": len(report["verified"]),
                 "failure_count": len(report["failures"]),
             }
-            REPORT_PATH.write_text(
+            SCRAPE_REPORT_PATH.write_text(
                 json.dumps(scrape_report, ensure_ascii=False, indent=2) + "\n",
                 encoding="utf-8",
             )
