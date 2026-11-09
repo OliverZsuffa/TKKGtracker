@@ -272,6 +272,7 @@ def find_verified_youtube_music_playlist(
             "url": f"{YTM_BASE}{urlencode({'list': playlist_id})}",
             "title": playlist_title,
             "track_count": len(tracks),
+            "_matched_tracks": tracks,
         }
 
     if len(verified) == 0:
