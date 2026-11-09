@@ -202,6 +202,7 @@ def find_verified_youtube_music_playlist(
     for query in queries:
         for filter_name in ("albums", "playlists"):
             try:
+                time.sleep(0.35)
                 results = ytm.search(query, filter=filter_name, limit=10)
             except Exception as exc:
                 raise RuntimeError(f"YouTube Music search failed for {query!r}: {exc}") from exc
@@ -216,6 +217,7 @@ def find_verified_youtube_music_playlist(
     rejected: list[str] = []
     for playlist_id, candidate in candidates.items():
         try:
+            time.sleep(0.35)
             playlist = ytm.get_playlist(playlist_id, limit=None)
         except Exception as exc:
             rejected.append(f"{playlist_id}: playlist retrieval failed: {exc}")
@@ -395,6 +397,25 @@ def enrich_catalogue(
                 encoding="utf-8",
             )
         report["catalogue_updated"] = True
+        if catalogue_path.resolve() == CATALOGUE_PATH.resolve():
+            scrape_report = {}
+            try:
+                if REPORT_PATH.exists():
+                    loaded_report = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
+                    if isinstance(loaded_report, dict):
+                        scrape_report = loaded_report
+            except (OSError, json.JSONDecodeError):
+                scrape_report = {}
+            scrape_report["audio_release_coverage"] = report["coverage_after"]
+            scrape_report["audio_enrichment"] = {
+                "updated_at": report["finished_at"],
+                "verified_count": len(report["verified"]),
+                "failure_count": len(report["failures"]),
+            }
+            REPORT_PATH.write_text(
+                json.dumps(scrape_report, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
     return report
 
 
